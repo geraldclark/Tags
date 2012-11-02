@@ -416,7 +416,7 @@ class tag_Tags extends tag_Tags_sugar
         $vardefs = array();
         $vardefs[$module][] = array(
             'name' => $this->tag_field,
-            'type' => 'customtag',
+            'type' => 'CustomTag',
             'source' => 'non-db',
             'dbType' => 'non-db',
             'studio' => 'visible',

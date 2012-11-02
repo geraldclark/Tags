@@ -59,7 +59,7 @@ array (
             'name' => 'monitored_module',
             'studio' => 'visible',
             'label' => 'LBL_MONITORED_MODULE',
-            'type' => 'custommodulefieldselect',
+            'type' => 'CustomModuleFieldSelect',
             'displayParams' => 
             array (
               'targetField' => 'monitored_fields',
