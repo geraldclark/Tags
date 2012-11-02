@@ -344,7 +344,7 @@ class tag_Tags extends tag_Tags_sugar
 
         $join = $moduleObj->$relationshipName->getJoin(array());
 
-        $subquery = str_replace("\n"," ", "SELECT {$moduleObj->table_name}.id FROM {$moduleObj->table_name} {$join} WHERE {$moduleObj->table_name}.deleted = 0 AND tag_tags.name in ({0})");
+        $subquery = str_replace("\n"," ", "SELECT {$moduleObj->table_name}.id FROM {$moduleObj->table_name} {$join} WHERE {$moduleObj->table_name}.deleted = 0 AND tag_tags.name_upper in ({0})");
 
         //add search defs
         $definition = array (
