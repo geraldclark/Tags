@@ -33,10 +33,10 @@ class tag_Tags extends tag_Tags_sugar
     var $log_prefix = 'Tag :: ';
     var $tag_field = 'tag_tags_c';
 
-	function tag_Tags()
+    function tag_Tags()
     {
-		parent::tag_Tags_sugar();
-	}
+        parent::tag_Tags_sugar();
+    }
 
     /**
      * Function fetches a single row of data given the primary key value.
@@ -118,7 +118,7 @@ class tag_Tags extends tag_Tags_sugar
         {
             foreach ($configuratorObj->config['customTagSettings']['relationships'] as $key=>$relationship)
             {
-                if (isset($availableModules[$key]))
+                if (isset($availableModules[$key]) && $this->checkRelationships($key))
                 {
                     $installedModules[$key] = $availableModules[$key];
                 }
@@ -484,9 +484,9 @@ class tag_Tags extends tag_Tags_sugar
         $relationshipExists = false;
 
         if (
-           !empty($module)
-           && isset($configuratorObj->config['customTagSettings']['relationships'][$module])
-           && !empty($configuratorObj->config['customTagSettings']['relationships'][$module])
+            !empty($module)
+            && isset($configuratorObj->config['customTagSettings']['relationships'][$module])
+            && !empty($configuratorObj->config['customTagSettings']['relationships'][$module])
         )
         {
             $relationshipExists = $relationshipObj->exists($configuratorObj->config['customTagSettings']['relationships'][$module], $db);
@@ -498,6 +498,8 @@ class tag_Tags extends tag_Tags_sugar
 
             if ($potentialRelationship === null)
             {
+                $configuratorObj->config['customTagSettings']['relationships'][$module] = "";
+                $configuratorObj->saveConfig();
                 return false;
             }
             else
