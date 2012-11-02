@@ -8,4 +8,5 @@ The 'ModuleBuilder' directory contains the initial Module Builder files the pack
 Credits
 ====
 This plugin makes use of the jQuery-Tagit library by Matthew Hailwood and http://jquery.webspirited.com.
+
 Repo: https://github.com/hailwood/jQuery-Tagit
