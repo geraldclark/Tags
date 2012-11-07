@@ -32,7 +32,7 @@
 {tag_get_search_layout module=$tag_module field=$tag_field}
 {multienum_to_array string=$tag_value assign="values"}
 
-{if $view_action eq 'DetailView' && $view_module ne $tag_module}
+{if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($subpanel eq '1') }
 
         {if $tagSearchForm eq ''}
             {foreach from=$values key=k item=i name=n}
