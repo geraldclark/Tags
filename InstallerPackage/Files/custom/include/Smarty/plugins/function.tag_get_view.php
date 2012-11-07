@@ -21,9 +21,13 @@ function smarty_function_tag_get_view($params, &$smarty)
     $smarty->assign('view_module', $_REQUEST['module']);
     $smarty->assign('view_action', $_REQUEST['action']);
 
-    if ( (isset($_REQUEST['subpanel']) && !empty($_REQUEST['subpanel'])) || (isset($_REQUEST['forQuickCreate']) && $_REQUEST['forQuickCreate'] == 1))
+    if (
+        (isset($_REQUEST['action']) && isset($params['id']) && isset($_REQUEST['record']) && $params['id'] != $_REQUEST['record'] && $_REQUEST['action'] == 'DetailView')
+        || (isset($_REQUEST['subpanel']) && !empty($_REQUEST['subpanel']))
+        || (isset($_REQUEST['forQuickCreate']) && $_REQUEST['forQuickCreate'] == 1)
+       )
     {
-        $smarty->assign('subpanel', '1');
+        $smarty->assign('is_subpanel', '1');
     }
 }
 
