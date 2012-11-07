@@ -692,60 +692,58 @@ class tag_Tags extends tag_Tags_sugar
 
         $taggerObj = BeanFactory::newBean('tag_Taggers');
 
-        //return if tagger is disabled
-        if (!$taggerObj->isTaggerEnabled())
+        //if tagger is enabled
+        if ($taggerObj->isTaggerEnabled())
         {
-            return;
-        }
+            $GLOBALS['log']->info($this->log_prefix . "Finding matches for {$bean->module_name}.");
 
-        $GLOBALS['log']->info($this->log_prefix . "Finding matches for {$bean->module_name}.");
+            $results = $taggerObj->get_full_list('', " tag_taggers.status = 'Active' AND tag_taggers.monitored_module = '{$bean->module_name}' ");
 
-        $results = $taggerObj->get_full_list('', " tag_taggers.status = 'Active' AND tag_taggers.monitored_module = '{$bean->module_name}' ");
-
-        if ($taggerObj->getTaggerBehavior() == 'Reevaluate')
-        {
-            //get current tags unfiltered
-            $currentTagIds = $this->getBeanTagIds($bean);
-            //start with nothing
-            $selectedTagIds = array();
-        }
-        else
-        {
-            //get current tags filtered
-            $currentTagIds = $this->getBeanTagIds($bean, true);
-            //start with all current tags
-            $selectedTagIds = $currentTagIds;
-        }
-
-        if (!empty($results))
-        {
-            foreach ($results as $taggerObj)
+            if ($taggerObj->getTaggerBehavior() == 'Reevaluate')
             {
-                $GLOBALS['log']->info($this->log_prefix . "Checking matches for {$taggerObj->id} / {$taggerObj->name}.");
+                //get current tags unfiltered
+                $currentTagIds = $this->getBeanTagIds($bean);
+                //start with nothing
+                $selectedTagIds = array();
+            }
+            else
+            {
+                //get current tags filtered
+                $currentTagIds = $this->getBeanTagIds($bean, true);
+                //start with all current tags
+                $selectedTagIds = $currentTagIds;
+            }
 
-                $matches = $taggerObj->findMatches($bean, $selectedTagIds);
-
-                if ($matches !== false)
+            if (!empty($results))
+            {
+                foreach ($results as $taggerObj)
                 {
-                    foreach ($matches as $tagIdKey=>$tagIdValue)
+                    $GLOBALS['log']->info($this->log_prefix . "Checking matches for {$taggerObj->id} / {$taggerObj->name}.");
+
+                    $matches = $taggerObj->findMatches($bean, $selectedTagIds);
+
+                    if ($matches !== false)
                     {
-                        $selectedTagIds[$tagIdKey] = $tagIdValue;
+                        foreach ($matches as $tagIdKey=>$tagIdValue)
+                        {
+                            $selectedTagIds[$tagIdKey] = $tagIdValue;
+                        }
                     }
                 }
             }
+
+            //add tag difference
+            $this->addTagDifference($selectedTagIds, $currentTagIds, $bean);
+
+            if (BeanFactory::newBean('tag_Taggers')->getTaggerBehavior() == 'Reevaluate')
+            {
+                //remove tag difference
+                $this->removeTagDifference($selectedTagIds, $currentTagIds, $bean);
+            }
+
+            //make sure we reset the bean tag field
+            $this->setBeanTags($bean);
         }
-
-        //add tag difference
-        $this->addTagDifference($selectedTagIds, $currentTagIds, $bean);
-
-        if (BeanFactory::newBean('tag_Taggers')->getTaggerBehavior() == 'Reevaluate')
-        {
-            //remove tag difference
-            $this->removeTagDifference($selectedTagIds, $currentTagIds, $bean);
-        }
-
-        //make sure we reset the bean tag field
-        $this->setBeanTags($bean);
 
         $GLOBALS['log']->info($this->log_prefix . "End tagger save logic.'");
     }
