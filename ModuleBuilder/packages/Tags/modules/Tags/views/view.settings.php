@@ -2,7 +2,7 @@
 
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
-/*********************************************************************************
+ /*********************************************************************************
  * The contents of this file are subject to the SugarCRM Master Subscription
  * Agreement ("License") which can be viewed at
  * http://www.sugarcrm.com/crm/master-subscription-agreement
@@ -34,22 +34,22 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 class ViewSettings extends SugarView
 {
     public function preDisplay()
-    {
-        global $current_user;
+   	{
+          global $current_user;
 
-        if(!$current_user->is_admin)
-        {
-            sugar_die(translate("LBL_MUST_BE_ADMIN"));
-        }
+          if(!$current_user->is_admin)
+          {
+              sugar_die(translate("LBL_MUST_BE_ADMIN"));
+          }
 
-        parent::preDisplay();
-    }
+          parent::preDisplay();
+   	}
 
     /**
-     * @see SugarView::display()
-     */
-    public function display()
-    {
+	 * @see SugarView::display()
+	 */
+	public function display()
+	{
         global $current_user, $sugar_config, $mod_strings, $app_strings;
         if(!is_admin($current_user)) sugar_die($GLOBALS['app_strings']['ERR_NOT_ADMIN']);
 
@@ -57,47 +57,19 @@ class ViewSettings extends SugarView
 
         if(isset($_POST['saveConfig']) && !empty($_POST['saveConfig']))
         {
-            $configuratorObj = $tagObj->getConfig();
+            $relationshipName = false;
+
+            require_once('modules/tag_Tags/TagSettings.php');
+            $settings = new TagSettings();
 
             //update config
-            $configuratorObj->config['customTagSettings']['tagger']['status'] = $_POST['tagger_status'];
-            $configuratorObj->config['customTagSettings']['tagger']['behavior'] = $_POST['tagger_behavior'];
-            $configuratorObj->config['customTagSettings']['tagger']['session'] = $_POST['tagger_session'];
-
-            $limit = preg_replace ( '/[^0-9]/', '', $_POST['tagger_limit']);
-
-            if (!is_numeric($limit))
-            {
-                $limit = '200';
-            }
-
-            $configuratorObj->config['customTagSettings']['tagger']['limit'] = $limit;
-
-            $days = $_POST['tagger_days'];
-
-            if (trim($days) == '-1' || trim($days) === '')
-            {
-                $days = '-1';
-            }
-            else
-            {
-                $days = preg_replace ( '/[^0-9]/', '', $days);
-            }
-
-            $configuratorObj->config['customTagSettings']['tagger']['days'] = $days;
-
-
-            if (!isset($_POST['tag_acl']))
-            {
-                $acl = 'Restricted';
-            }
-            else
-            {
-                $acl = $_POST['tag_acl'];
-            }
-
-            $configuratorObj->config['customTagSettings']['tag']['acl'] = $acl;
-            $configuratorObj->saveConfig();
+            $settings->status->value = $_POST['tagger_status'];
+            $settings->behavior->value = $_POST['tagger_behavior'];
+            $settings->session->value = $_POST['tagger_session'];
+            $settings->limit->value = $_POST['tagger_limit'];
+            $settings->days->value = $_POST['tagger_days'];
+            $settings->acl->value = $_POST['tag_acl'];
+            $settings->save();
 
             //check relationships to install
             $installModules = array();
@@ -144,7 +116,7 @@ class ViewSettings extends SugarView
         $sugar_smarty->assign('imodules', $tagObj->getInstalledModules());
         $sugar_smarty->assign('umodules', $tagObj->getUninstalledModules());
         $sugar_smarty->display('modules/tag_Tags/tpls/settings.tpl');
-    }
+	}
 
     /**
      * @param string $needle - string to find

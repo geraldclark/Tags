@@ -57,47 +57,19 @@ class ViewSettings extends SugarView
 
         if(isset($_POST['saveConfig']) && !empty($_POST['saveConfig']))
         {
-            $configuratorObj = $tagObj->getConfig();
+            $relationshipName = false;
+
+            require_once('modules/tag_Tags/TagSettings.php');
+            $settings = new TagSettings();
 
             //update config
-            $configuratorObj->config['customTagSettings']['tagger']['status'] = $_POST['tagger_status'];
-            $configuratorObj->config['customTagSettings']['tagger']['behavior'] = $_POST['tagger_behavior'];
-            $configuratorObj->config['customTagSettings']['tagger']['session'] = $_POST['tagger_session'];
-
-            $limit = preg_replace ( '/[^0-9]/', '', $_POST['tagger_limit']);
-
-            if (!is_numeric($limit))
-            {
-                $limit = '200';
-            }
-
-            $configuratorObj->config['customTagSettings']['tagger']['limit'] = $limit;
-
-            $days = $_POST['tagger_days'];
-
-            if (trim($days) == '-1' || trim($days) === '')
-            {
-                $days = '-1';
-            }
-            else
-            {
-                $days = preg_replace ( '/[^0-9]/', '', $days);
-            }
-
-            $configuratorObj->config['customTagSettings']['tagger']['days'] = $days;
-
-
-            if (!isset($_POST['tag_acl']))
-            {
-                $acl = 'Restricted';
-            }
-            else
-            {
-                $acl = $_POST['tag_acl'];
-            }
-
-            $configuratorObj->config['customTagSettings']['tag']['acl'] = $acl;
-            $configuratorObj->saveConfig();
+            $settings->status->value = $_POST['tagger_status'];
+            $settings->behavior->value = $_POST['tagger_behavior'];
+            $settings->session->value = $_POST['tagger_session'];
+            $settings->limit->value = $_POST['tagger_limit'];
+            $settings->days->value = $_POST['tagger_days'];
+            $settings->acl->value = $_POST['tag_acl'];
+            $settings->save();
 
             //check relationships to install
             $installModules = array();
