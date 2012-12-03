@@ -75,9 +75,10 @@ class tag_Taggers extends tag_Taggers_sugar
      */
     public function isTaggerEnabled()
     {
-        $configuratorObj = BeanFactory::newBean('tag_Tags')->getConfig();
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
 
-        if (isset($configuratorObj->config['customTagSettings']['tagger']['status']) && $configuratorObj->config['customTagSettings']['tagger']['status'] == 'Active')
+        if ($settings->status->value == 'Active')
         {
             return true;
         }
@@ -92,16 +93,10 @@ class tag_Taggers extends tag_Taggers_sugar
      */
     public function getTaggerBehavior()
     {
-        $configuratorObj = BeanFactory::newBean('tag_Tags')->getConfig();
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
 
-        $possibleValues = array('Append', 'Reevaluate');
-        if (isset($configuratorObj->config['customTagSettings']['tagger']['behavior']) && in_array($configuratorObj->config['customTagSettings']['tagger']['behavior'], $possibleValues))
-        {
-            return $configuratorObj->config['customTagSettings']['tagger']['behavior'];
-        }
-
-        //return append as the default setting
-        return 'Append';
+        return $settings->behavior->value;
     }
 
     /**
@@ -112,9 +107,10 @@ class tag_Taggers extends tag_Taggers_sugar
      */
     public function isTaggerSessionEnabled()
     {
-        $configuratorObj = BeanFactory::newBean('tag_Tags')->getConfig();
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
 
-        if ($this->isTaggerEnabled() && isset($configuratorObj->config['customTagSettings']['tagger']['session']) && $configuratorObj->config['customTagSettings']['tagger']['session'] == 'Active')
+        if ($this->isTaggerEnabled() && $settings->session->value == 'Active')
         {
             return true;
         }
@@ -189,7 +185,7 @@ class tag_Taggers extends tag_Taggers_sugar
                     isset($field['vname'])
                     && !empty($field['vname'])
                     && isset($field['type'])
-                    && in_array($field['type'], array('name', 'varchar', 'text', 'enum', 'multienum', 'phone'))
+                    && in_array($field['type'], array('name', 'varchar', 'text', 'enum', 'multienum', 'phone', 'worklog'))
                    )
                 {
                     $label = trim(translate($field['vname'], $module));

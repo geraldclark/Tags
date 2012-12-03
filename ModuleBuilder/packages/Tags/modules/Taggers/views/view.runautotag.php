@@ -52,8 +52,11 @@ class ViewRunAutoTag extends SugarView
 	{
         $limit = 1;
         $silent = false;
-        $configuratorObj = BeanFactory::newBean('tag_Tags')->getConfig();
-        $days = $configuratorObj->config['customTagSettings']['tagger']['days'];
+
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
+
+        $days = $settings->days->value;
         require('modules/tag_Taggers/Schedulers/AutoTag.php');
 	}
 }

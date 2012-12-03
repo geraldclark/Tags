@@ -111,19 +111,19 @@ class tag_Tags extends tag_Tags_sugar
     public function getInstalledModules()
     {
         $availableModules = $this->getAvailableModules();
-        $configuratorObj = $this->getConfig();
+
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
 
         $installedModules = array();
-        if (isset($configuratorObj->config['customTagSettings']['relationships']) && is_array($configuratorObj->config['customTagSettings']['relationships']))
+        foreach ($settings->relationships->value as $key=>$relationship)
         {
-            foreach ($configuratorObj->config['customTagSettings']['relationships'] as $key=>$relationship)
+            if (isset($availableModules[$key]) && $this->checkRelationships($key))
             {
-                if (isset($availableModules[$key]) && $this->checkRelationships($key))
-                {
-                    $installedModules[$key] = $availableModules[$key];
-                }
+                $installedModules[$key] = $availableModules[$key];
             }
         }
+
 
         asort($installedModules);
         return $installedModules;
@@ -231,81 +231,17 @@ class tag_Tags extends tag_Tags_sugar
      */
     public function getTagUserACL()
     {
-        $configuratorObj = $this->getConfig();
-
-        $possibleValues = array('Editable', 'Limited', 'Restricted');
         $taggerObj = BeanFactory::newBean('tag_Taggers');
         if ($taggerObj->getTaggerBehavior() == 'Reevaluate' && $taggerObj->isTaggerEnabled())
         {
             return 'Restricted';
         }
-        elseif (isset($configuratorObj->config['customTagSettings']['tag']['acl']) && in_array($configuratorObj->config['customTagSettings']['tag']['acl'], $possibleValues))
+        else
         {
-            return $configuratorObj->config['customTagSettings']['tag']['acl'];
+            require_once('modules/tag_Tags/TagSettings.php');
+            $settings = new TagSettings();
+            return $settings->acl->value;
         }
-
-        //return editable as the default setting
-        return 'Editable';
-    }
-
-    /**
-     * Retrieves the config and sets any defaults we may be missing.
-     *
-     * @return object $configuratorObj - system config
-     */
-    public function getConfig()
-    {
-
-        require_once 'modules/Configurator/Configurator.php';
-        $configuratorObj = new Configurator();
-        $configuratorObj->loadConfig();
-
-        $configStart = $configuratorObj->config;
-
-        if (!isset($configuratorObj->config['customTagSettings']))
-        {
-            $configuratorObj->config['customTagSettings'] = array();
-        }
-
-        if (!isset($configuratorObj->config['customTagSettings']['tagger']['session']))
-        {
-            $configuratorObj->config['customTagSettings']['tagger']['session'] = 'Inactive';
-        }
-
-        if (!isset($configuratorObj->config['customTagSettings']['tagger']['status']))
-        {
-            $configuratorObj->config['customTagSettings']['tagger']['status'] = 'Inactive';
-        }
-
-        if (!isset($configuratorObj->config['customTagSettings']['tagger']['behavior']))
-        {
-            $configuratorObj->config['customTagSettings']['tagger']['behavior'] = 'Append';
-        }
-
-        if (!isset($configuratorObj->config['customTagSettings']['tagger']['limit']))
-        {
-            $configuratorObj->config['customTagSettings']['tagger']['limit'] = '200';
-        }
-
-        if (!isset($configuratorObj->config['customTagSettings']['tagger']['days']))
-        {
-            $configuratorObj->config['customTagSettings']['tagger']['days'] = '-1';
-        }
-
-        if (!isset($configuratorObj->config['customTagSettings']['tag']['acl']))
-        {
-            $configuratorObj->config['customTagSettings']['tag']['acl'] = 'Editable';
-        }
-
-        if ($configStart !== $configuratorObj->config)
-        {
-            $GLOBALS['log']->info($this->log_prefix . "Updating config settings.");
-            $configuratorObj->saveConfig();
-        }
-
-        $configuratorObj->loadConfig();
-
-        return $configuratorObj;
     }
 
     /**
@@ -451,9 +387,11 @@ class tag_Tags extends tag_Tags_sugar
         $relHelper->installRelationship($relName, $installDefs, $savePath, $runRepair);
 
         //set relationship name in config
-        $configuratorObj = $this->getConfig();
-        $configuratorObj->config['customTagSettings']['relationships'][$module] = $relName;
-        $configuratorObj->saveConfig();
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
+
+        $settings->relationships->value[$module] = $relName;
+        $settings->save();
 
         if ($runRepair)
         {
@@ -473,8 +411,8 @@ class tag_Tags extends tag_Tags_sugar
             return;
         }
 
-        $configuratorObj = $this->getConfig();
-        $configStart = $configuratorObj->config;
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
 
         $db = DBManagerFactory::getInstance();
 
@@ -485,11 +423,11 @@ class tag_Tags extends tag_Tags_sugar
 
         if (
             !empty($module)
-            && isset($configuratorObj->config['customTagSettings']['relationships'][$module])
-            && !empty($configuratorObj->config['customTagSettings']['relationships'][$module])
+            && isset($settings->relationships->value[$module])
+            && !empty($settings->relationships->value[$module])
         )
         {
-            $relationshipExists = $relationshipObj->exists($configuratorObj->config['customTagSettings']['relationships'][$module], $db);
+            $relationshipExists = $relationshipObj->exists($settings->relationships->value[$module], $db);
         }
 
         if (!$relationshipExists)
@@ -498,8 +436,8 @@ class tag_Tags extends tag_Tags_sugar
 
             if ($potentialRelationship === null)
             {
-                $configuratorObj->config['customTagSettings']['relationships'][$module] = "";
-                $configuratorObj->saveConfig();
+                $settings->relationships->value[$module] = "";
+                $settings->save();
                 return false;
             }
             else
@@ -507,8 +445,8 @@ class tag_Tags extends tag_Tags_sugar
                 $GLOBALS['log']->info($this->log_prefix . "Updating config settings to use potential relationship '{$potentialRelationship}'.");
 
                 //update the config to use the found relationship
-                $configuratorObj->config['customTagSettings']['relationships'][$module] = $potentialRelationship;
-                $configuratorObj->saveConfig();
+                $settings->relationships->value[$module] = $potentialRelationship;
+                $settings->save();
                 return true;
             }
         }
@@ -1028,20 +966,20 @@ class tag_Tags extends tag_Tags_sugar
      */
     function loadBeanRelationshipToTags(&$bean)
     {
-        $relationshipName = false;
+        require_once('modules/tag_Tags/TagSettings.php');
+        $settings = new TagSettings();
 
-        global $sugar_config;
-
-        if (isset($sugar_config['customTagSettings']['relationships'][$bean->module_name]) && !empty($sugar_config['customTagSettings']['relationships'][$bean->module_name]))
+        if (isset($settings->relationships->value[$bean->module_name]) && !empty($settings->relationships->value[$bean->module_name]))
         {
             //relate tags to record
-            $relationshipName = $sugar_config['customTagSettings']['relationships'][$bean->module_name];
+            $relationshipName = $settings->relationships->value[$bean->module_name];
 
             if(empty($bean->$relationshipName) && !$bean->load_relationship($relationshipName))
             {
                 $GLOBALS['log']->fatal($this->log_prefix . "Could not load the relationship '{$relationshipName}' for {$bean->module_name}.");
                 return false;
             }
+
             return $relationshipName;
         }
 

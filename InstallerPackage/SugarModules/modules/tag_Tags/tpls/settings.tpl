@@ -73,10 +73,10 @@
                         </td>
                         <td width='25%' >
 
-                        {if ($config.customTagSettings.tagger.status) == 'Active'}
+                        {if ($config.custom_settings.tag_Taggers.status) == 'Active'}
                             {assign var='active' value='SELECTED'}
                         {/if}
-                        {if ($config.customTagSettings.tagger.status) == 'Inactive'}
+                        {if ($config.custom_settings.tag_Taggers.status) == 'Inactive'}
                             {assign var='inactive' value='SELECTED'}
                         {/if}
                             <SELECT  ID="tagger_status" NAME="tagger_status">
@@ -88,10 +88,10 @@
                         {$MOD.LBL_TAGGER_BEHAVIOR}:
                         </td>
                         <td width='25%' >
-                        {if ($config.customTagSettings.tagger.behavior) == 'Append'}
+                        {if ($config.custom_settings.tag_Taggers.behavior) == 'Append'}
                             {assign var='append' value='SELECTED'}
                         {/if}
-                        {if ($config.customTagSettings.tagger.behavior) == 'Reevaluate'}
+                        {if ($config.custom_settings.tag_Taggers.behavior) == 'Reevaluate'}
                             {assign var='reevaluate' value='SELECTED'}
                         {/if}
                             <SELECT  ID="tagger_behavior" NAME="tagger_behavior">
@@ -105,13 +105,13 @@
                         {$MOD.LBL_TAGGER_LIMIT}:
                         </td>
                         <td>
-                            <input type="text" name="tagger_limit" value="{$config.customTagSettings.tagger.limit}">
+                            <input type="text" name="tagger_limit" value="{$config.custom_settings.tag_Taggers.limit}">
                         </td>
                         <td scope="row" width='25%'>
                         {$MOD.LBL_TAGGER_DAYS}:
                         </td>
                         <td>
-                            <input type="text" name="tagger_days" value="{$config.customTagSettings.tagger.days}">
+                            <input type="text" name="tagger_days" value="{$config.custom_settings.tag_Taggers.days}">
                         </td>
                     </tr>
                     <tr>
@@ -119,10 +119,10 @@
                         {$MOD.LBL_TAGGER_SESSION}:
                         </td>
                         <td>
-                        {if ($config.customTagSettings.tagger.session) == 'Active'}
+                        {if ($config.custom_settings.tag_Taggers.session) == 'Active'}
                             {assign var='active_session' value='SELECTED'}
                         {/if}
-                        {if ($config.customTagSettings.tagger.session) == 'Inactive'}
+                        {if ($config.custom_settings.tag_Taggers.session) == 'Inactive'}
                             {assign var='inactive_session' value='SELECTED'}
                         {/if}
                             <SELECT  ID="tagger_session" NAME="tagger_session">
@@ -148,13 +148,13 @@
                         {$MOD.LBL_TAG_ACL}:
                         </td>
                         <td width='25%' >
-                        {if ($config.customTagSettings.tag.acl) == 'Editable'}
+                        {if ($config.custom_settings.tag_Tags.acl) == 'Editable'}
                             {assign var='editable' value='SELECTED'}
                         {/if}
-                        {if ($config.customTagSettings.tag.acl) == 'Limited'}
+                        {if ($config.custom_settings.tag_Tags.acl) == 'Limited'}
                             {assign var='limited' value='SELECTED'}
                         {/if}
-                        {if ($config.customTagSettings.tag.acl) == 'Restricted'}
+                        {if ($config.custom_settings.tag_Tags.acl) == 'Restricted'}
                             {assign var='restricted' value='SELECTED'}
                         {/if}
                             <SELECT  ID="tag_acl" NAME="tag_acl">

@@ -2,9 +2,12 @@
 
     if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
+    require_once('modules/tag_Tags/TagSettings.php');
+    $settings = new TagSettings();
+
     if (!isset($limit))
     {
-        $limit = 200;
+        $limit = $settings->limit->value;
     }
 
     if (!isset($silent))
@@ -14,7 +17,7 @@
 
     if (!isset($days))
     {
-        $days = 0;
+        $days = $settings->days->value;
     }
 
     $taggerObj = BeanFactory::newBean('tag_Taggers');
@@ -56,7 +59,7 @@
 
     $whereDateSQL = '';
 
-    if ($days !== '-1')
+    if ($days !== -1)
     {
         $todaySQL = $db->convert("", 'today');
 
