@@ -7,7 +7,7 @@
 
     if (!isset($limit))
     {
-        $limit = $settings->limit->value;
+        $limit = 200;
     }
 
     if (!isset($silent))
