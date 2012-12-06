@@ -17,7 +17,7 @@
 
     if (!isset($days))
     {
-        $days = $settings->days->value;
+        $days = 0
     }
 
     $taggerObj = BeanFactory::newBean('tag_Taggers');
