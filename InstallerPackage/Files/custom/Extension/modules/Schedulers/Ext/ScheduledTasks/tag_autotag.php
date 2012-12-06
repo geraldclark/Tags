@@ -4,9 +4,11 @@ $job_strings[] = 'tag_autotag';
 
 function tag_autotag()
 {
-    $configuratorObj = BeanFactory::newBean('tag_Tags')->getConfig();
-    $limit = $configuratorObj->config['customTagSettings']['tagger']['limit'];
-    $days = $configuratorObj->config['customTagSettings']['tagger']['days'];
+    require_once('modules/tag_Tags/TagSettings.php');
+    $settings = new TagSettings();
+
+    $limit = $settings->limit->value;
+    $days = $settings->limit->days;
 
     require('modules/tag_Taggers/Schedulers/AutoTag.php');
 
