@@ -284,7 +284,7 @@ class tag_Taggers extends tag_Taggers_sugar
                 {
                     if ($relatedPhrase->regex == 1 || $relatedPhrase->regex == true || $relatedPhrase->regex == '1')
                     {
-                        if (!isset($tagsPhrases[$relatedPhrase->phrase]))
+                        if (!isset($tagsPhrases[$relatedTag->id]))
                         {
                            $tagsPhrases[$relatedTag->id] = array();
                         }
