@@ -247,7 +247,7 @@ class tag_Tags extends tag_Tags_sugar
     /**
      * Checks to make sure the tag field has a definition in custom/modules/module/metadata/SearchFields.php. If not, one is added.
      */
-    function addSearchField($module)
+    function addSearchField($module, $inclusive = true)
     {
         if (empty($module))
         {
@@ -280,7 +280,14 @@ class tag_Tags extends tag_Tags_sugar
 
         $join = $moduleObj->$relationshipName->getJoin(array());
 
-        $subquery = str_replace("\n"," ", "SELECT {$moduleObj->table_name}.id FROM {$moduleObj->table_name} {$join} WHERE {$moduleObj->table_name}.deleted = 0 AND tag_tags.name_upper in ({0})");
+        $subquery = "SELECT {$moduleObj->table_name}.id FROM {$moduleObj->table_name} {$join} WHERE {$moduleObj->table_name}.deleted = 0 AND tag_tags.name_upper in ({0})";
+
+        if ($inclusive)
+        {
+            $subquery .= " GROUP BY {$moduleObj->table_name}.id HAVING count({$moduleObj->table_name}.id) IN (SELECT count(*) from tag_tags where tag_tags.deleted = 0 and tag_tags.name_upper in ({0}))";
+        }
+
+        $subquery = str_replace("\n", " ", $subquery);
 
         //add search defs
         $definition = array (

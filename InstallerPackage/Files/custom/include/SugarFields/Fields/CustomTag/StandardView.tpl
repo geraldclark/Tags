@@ -32,6 +32,24 @@
 {tag_get_search_layout module=$tag_module field=$tag_field}
 {multienum_to_array string=$tag_value assign="values"}
 
+{if (($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView' || $view_action eq 'index') && ($values|@count gt 0)}
+    {if $values|@count == 1 }
+        {$values|@count} Tag
+        {elseif $values|@count gt 1}
+        {$values|@count} Tags
+    {/if}
+
+<a href="javascript:void(0);" id="{$tag_id}_less" style="display:none;" onclick="$(this).hide();$('#all_{$tag_id}').hide();$('#{$tag_id}_more').show();">
+    <span id="{$tag_id}_less">{sugar_image name="lessitems" width="10" height="10"}</span>
+</a>
+<a href="javascript:void(0);" id="{$tag_id}_more" onclick="$(this).hide();$('#all_{$tag_id}').show();$('#{$tag_id}_less').show();">
+    <span id="{$tag_id}_more">{sugar_image name="moreitems" width="10" height="10"}</span>
+</a>
+
+<span id="all_{$tag_id}" style="display:none;">
+<br>
+{/if}
+
 {if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') }
 
     {if $tagSearchForm eq ''}
@@ -42,8 +60,9 @@
     <script src="custom/include/SugarFields/Fields/CustomTag/CustomTag.js" type="text/javascript" id="CustomTagFunctions"></script>
 
         {foreach from=$values key=k item=i name=n}
-        <a href="javascript:void(0);" id="{$tag_id}" onclick="searchTag('{$tag_field}', '{$tag_module}', '{$tagSearchForm}', '{$tagSearchFormShort}', '{$i}');">{$i}</a>{if !$smarty.foreach.n.last}, {/if}
+        <a href="javascript:void(0);" id="{$tag_id}_{$k}" onclick="searchTag('{$tag_field}', '{$tag_module}', '{$tagSearchForm}', '{$tagSearchFormShort}', '{$i}');">{$i}</a>{if !$smarty.foreach.n.last}, {/if}
         {/foreach}
+
     {/if}
 
     {else}
@@ -242,4 +261,8 @@ tagSource: function(search, showChoices) {
 
     </span>
 
+{/if}
+
+{if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView'}
+</span>
 {/if}
