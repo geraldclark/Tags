@@ -40,10 +40,10 @@
     {/if}
 
 <a href="javascript:void(0);" id="{$tag_id}_less" style="display:none;" onclick="$(this).hide();$('#all_{$tag_id}').hide();$('#{$tag_id}_more').show();">
-    <span id="{$tag_id}_less">{sugar_image name="lessitems" width="10" height="10"}</span>
+    <span id="{$tag_id}_less">{sugar_getimage name="lessitems.png" width="10" height="10"}</span>
 </a>
 <a href="javascript:void(0);" id="{$tag_id}_more" onclick="$(this).hide();$('#all_{$tag_id}').show();$('#{$tag_id}_less').show();">
-    <span id="{$tag_id}_more">{sugar_image name="moreitems" width="10" height="10"}</span>
+    <span id="{$tag_id}_more">{sugar_getimage name="moreitems.png" width="10" height="10"}</span>
 </a>
 
 <span id="all_{$tag_id}" style="display:none;">
@@ -264,5 +264,5 @@ tagSource: function(search, showChoices) {
 {/if}
 
 {if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView'}
-</span>
+    </span>
 {/if}
