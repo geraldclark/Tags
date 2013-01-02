@@ -40,10 +40,10 @@
     {/if}
 
 <a href="javascript:void(0);" id="{$tag_id}_less" style="display:none;" onclick="$(this).hide();$('#all_{$tag_id}').hide();$('#{$tag_id}_more').show();">
-    <span id="{$tag_id}_less">{sugar_getimage name="lessitems.png" width="10" height="10"}</span>
+    <span id="{$tag_id}_less">{sugar_getimage name="lessItems.png" width="10" height="10"}</span>
 </a>
 <a href="javascript:void(0);" id="{$tag_id}_more" onclick="$(this).hide();$('#all_{$tag_id}').show();$('#{$tag_id}_less').show();">
-    <span id="{$tag_id}_more">{sugar_getimage name="moreitems.png" width="10" height="10"}</span>
+    <span id="{$tag_id}_more">{sugar_getimage name="moreItems.png" width="10" height="10"}</span>
 </a>
 
 <span id="all_{$tag_id}" style="display:none;">
