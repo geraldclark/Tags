@@ -26,9 +26,14 @@ function smarty_block_tag_acl($params, $content, Smarty &$smarty)
         $smarty->trigger_error("tag_acl: missing required param (required_access)");
     }
 
+    if (empty($params['module']))
+    {
+        $smarty->trigger_error("tag_acl: missing required param (module)");
+    }
+
     $required_acls = is_array($params['required_access']) ? $params['required_access'] : preg_split('~\s*,\s*~', $params['required_access']);
 
-    $acl = BeanFactory::newBean('tag_Tags')->getTagUserACL();
+    $acl = BeanFactory::newBean('tag_Tags')->getTagUserACL($params['module']);
 
     if (in_array($acl, $required_acls))
     {

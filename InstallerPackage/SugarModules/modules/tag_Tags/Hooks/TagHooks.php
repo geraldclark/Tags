@@ -28,7 +28,7 @@
             $tagObj = BeanFactory::newBean('tag_Tags');
             $taggerObj = BeanFactory::newBean('tag_Taggers');
 
-            if ($taggerObj->isTaggerEnabled() && $taggerObj->getTaggerBehavior() == 'Reevaluate')
+            if ($taggerObj->isTaggerEnabled($bean->module_name) && $taggerObj->getTaggerBehavior($bean->module_name) == 'Reevaluate')
             {
                 //only run the tagger since it'll remove any non-matching tags anyway
                 $tagObj->saveTaggerTags($bean);

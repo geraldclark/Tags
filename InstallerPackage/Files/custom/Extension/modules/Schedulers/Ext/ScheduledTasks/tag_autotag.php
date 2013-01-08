@@ -4,13 +4,20 @@ $job_strings[] = 'tag_autotag';
 
 function tag_autotag()
 {
-    require_once('modules/tag_Tags/TagSettings.php');
-    $settings = new TagSettings();
+    $module = '';
+    require('modules/tag_Taggers/Schedulers/getModule.php');
 
+    $settings = new TagSettings($module);
+
+    $days = $settings->days->value;
     $limit = $settings->limit->value;
     $days = $settings->limit->days;
 
-    require('modules/tag_Taggers/Schedulers/AutoTag.php');
+    //update run time
+    $settings->scheduler_last_run->value = TimeDate::getInstance()->nowDb();
+    $settings->scheduler_last_run->save();
+
+    require('modules/tag_Taggers/Schedulers/autoTag.php');
 
     return true;
 }

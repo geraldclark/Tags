@@ -73,10 +73,10 @@ class tag_Taggers extends tag_Taggers_sugar
      *
      * @return boolean - true if active
      */
-    public function isTaggerEnabled()
+    public function isTaggerEnabled($module)
     {
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
+        $settings = new TagSettings($module, false);
 
         if ($settings->status->value == 'Active')
         {
@@ -91,10 +91,10 @@ class tag_Taggers extends tag_Taggers_sugar
      *
      * @return string - possible values are 'Append' and 'Reevaluate'
      */
-    public function getTaggerBehavior()
+    public function getTaggerBehavior($module)
     {
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
+        $settings = new TagSettings($module, false);
 
         return $settings->behavior->value;
     }
@@ -105,12 +105,12 @@ class tag_Taggers extends tag_Taggers_sugar
      *
      * @return boolean - true if active
      */
-    public function isTaggerSessionEnabled()
+    public function isTaggerSessionEnabled($module)
     {
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
+        $settings = new TagSettings($module, false);
 
-        if ($this->isTaggerEnabled() && $settings->session->value == 'Active')
+        if ($this->isTaggerEnabled($module) && $settings->session->value == 'Active')
         {
             return true;
         }
@@ -235,9 +235,9 @@ class tag_Taggers extends tag_Taggers_sugar
             ')(\\s*)(',
         );
 
-        if ($this->isTaggerSessionEnabled())
+        if (!empty($this->monitored_module) && $this->isTaggerSessionEnabled($this->monitored_module))
         {
-            if (!empty($this->monitored_module) && isset($_SESSION['customTagSettings']['tagger'][$this->monitored_module][$this->id]))
+            if (isset($_SESSION['customTagSettings']['tagger'][$this->monitored_module][$this->id]))
             {
                 $GLOBALS['log']->info($this->log_prefix . "Found tagger settings cached in session for '{$this->monitored_module}'.");
                 return $_SESSION['customTagSettings']['tagger'][$this->monitored_module][$this->id];
@@ -305,13 +305,10 @@ class tag_Taggers extends tag_Taggers_sugar
             }
         }
 
-        if ($this->isTaggerSessionEnabled())
+        if (!empty($this->monitored_module) && $this->isTaggerSessionEnabled($this->monitored_module))
         {
-            if (!empty($this->monitored_module))
-            {
-                $GLOBALS['log']->info($this->log_prefix . "Caching tagger settings in session for '{$this->monitored_module}'.");
-                return $_SESSION['customTagSettings']['tagger'][$this->monitored_module][$this->id] = $tagsPhrases;
-            }
+            $GLOBALS['log']->info($this->log_prefix . "Caching tagger settings in session for '{$this->monitored_module}'.");
+            return $_SESSION['customTagSettings']['tagger'][$this->monitored_module][$this->id] = $tagsPhrases;
         }
         else
         {
