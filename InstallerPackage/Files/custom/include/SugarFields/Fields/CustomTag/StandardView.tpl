@@ -131,7 +131,7 @@
         if (action == 'added' && $('#{/literal}{$tag_id}{literal}_content').hasClass('hideAtStart') == false)
         {
         {/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
-        url = 'index.php?to_pdf=1&module=tag_Tags&action=AddTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&&tag_name=' + escape(tagValue);
+        url = 'index.php?to_pdf=1&module=tag_Tags&action=AddTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&tag_name=' + escape(tagValue);
 
         $.ajax({
             url: url,
@@ -148,8 +148,7 @@
         else if (action == 'popped')
         {
         {/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
-            url = 'index.php?to_pdf=1&module=tag_Tags&action=RemoveTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&&tag_name=' + escape(tagValue);
-
+            url = 'index.php?to_pdf=1&module=tag_Tags&action=RemoveTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&tag_id=' + escape(tagValue);
             $.ajax({
                 url: url,
                 global: false,
