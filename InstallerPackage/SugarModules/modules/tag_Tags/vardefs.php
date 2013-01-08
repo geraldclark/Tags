@@ -99,7 +99,7 @@ $dictionary['tag_Tags'] = array(
     'calculated' => false,
     'len' => 100,
     'size' => '20',
-    'options' => 'status_list',
+    'options' => 'tagger_status_list',
     'studio' => 'visible',
     'dependency' => false,
   ),

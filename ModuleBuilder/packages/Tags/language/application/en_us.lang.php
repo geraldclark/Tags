@@ -33,5 +33,3 @@ $app_list_strings['moduleList']['tag_Phrases'] = 'Phrases';
 $app_list_strings['moduleList']['tag_Taggers'] = 'Taggers';
 $app_list_strings['tagger_status_list']['Active'] = 'Active';
 $app_list_strings['tagger_status_list']['Inactive'] = 'Inactive';
-$app_list_strings['status_list']['Active'] = 'Active';
-$app_list_strings['status_list']['Inactive'] = 'Inactive';
