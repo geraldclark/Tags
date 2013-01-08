@@ -43,20 +43,21 @@ class ViewRemoveTags extends SugarView
             && !empty($_REQUEST['record_module'])
             && isset($_REQUEST['record_id'])
             && !empty($_REQUEST['record_id'])
-            && isset($_REQUEST['tag_name'])
-            && isset($_REQUEST['tag_name'])
+            && isset($_REQUEST['tag_id'])
+            && !empty($_REQUEST['tag_id'])
             )
         {
-            $tag = trim(urldecode($_REQUEST['tag_name']));
+            $tag = trim(urldecode($_REQUEST['tag_id']));
 
             //load bean
             $beanObj = BeanFactory::getBean($_REQUEST['record_module'], $_REQUEST['record_id']);
 
             //remove tags
             $tagObj = BeanFactory::newBean('tag_Tags');
-            if ($tagObj->getTagUserACL() != 'Restricted')
+            if ($tagObj->getTagUserACL($beanObj->module_name) != 'Restricted')
             {
-                $tagObj->removeTagsFromBeanByName($beanObj, $tag);
+                //$tagObj->removeTagsFromBeanByName($beanObj, $tag);
+                $tagObj->removeTagsFromBean($beanObj, array($tag));
                 echo '<message>Success</div>';
             }
             else

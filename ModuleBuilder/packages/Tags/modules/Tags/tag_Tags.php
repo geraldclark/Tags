@@ -579,15 +579,14 @@ class tag_Tags extends tag_Tags_sugar
     {
         //figure out which keys to add
         $addTags = array();
-        foreach($selectedTagIds as $key=>$value)
+        foreach($selectedTagIds as $id=>$name)
         {
-            if (!isset($currentTagIds[$key]))
+            if (!isset($currentTagIds[$id]))
             {
-                $addTags[]=$value;
+                $addTags[]=$id;
             }
         }
 
-        $GLOBALS['log']->info($this->log_prefix . "Adding Tags: " . implode(", ", $addTags));
         $this->addTagsToBean($bean, $addTags);
     }
 
@@ -601,15 +600,14 @@ class tag_Tags extends tag_Tags_sugar
     function removeTagDifference($selectedTagIds, $currentTagIds, &$bean)
     {
         $removeTags = array();
-        foreach($currentTagIds as $key=>$value)
+        foreach($currentTagIds as $id=>$name)
         {
-            if (!isset($selectedTagIds[$key]))
+            if (!isset($selectedTagIds[$id]))
             {
-                $removeTags[]=$value;
+                $removeTags[]=$id;
             }
         }
 
-        $GLOBALS['log']->info($this->log_prefix . "Removing Tags: " . implode(", ", $removeTags));
         $this->removeTagsFromBean($bean, $removeTags);
     }
 
@@ -741,6 +739,9 @@ class tag_Tags extends tag_Tags_sugar
         {
             $tagIds = $this->getTagIdsFromNames($tagArray, $bean->module_name, false);
         }
+
+        //remove tag names
+        $tagIds = array_keys($tagIds);
 
         if (!empty($tagIds))
         {
@@ -964,8 +965,16 @@ class tag_Tags extends tag_Tags_sugar
      */
     public function removeTagsFromBean(&$bean, $tagIds)
     {
+        if (!is_array($tagIds))
+        {
+            $tagIds = array($tagIds);
+        }
+
         $relationshipName = $this->loadBeanRelationshipToTags($bean);
-        foreach($tagIds as $tagId=>$tagName)
+
+        $GLOBALS['log']->fatal($this->log_prefix . "Removing Tags: " . implode(", ", $tagIds));
+
+        foreach($tagIds as $tagId)
         {
             $bean->$relationshipName->delete($bean->id, $tagId);
         }
@@ -979,7 +988,8 @@ class tag_Tags extends tag_Tags_sugar
      */
     public function addTagsToBean(&$bean, $tagIds)
     {
-        $tagIds = array_keys($tagIds);
+        $GLOBALS['log']->info($this->log_prefix . "Adding Tags: " . implode(", ", $tagIds));
+
         $relationshipName = $this->loadBeanRelationshipToTags($bean);
         $bean->$relationshipName->add($tagIds);
     }

@@ -374,6 +374,8 @@ class tag_Taggers extends tag_Taggers_sugar
             }
         }
 
+
+
         return (!empty($selectedTags)) ? $selectedTags : false;
     }
 }

@@ -56,6 +56,7 @@ class ViewRemoveTags extends SugarView
             $tagObj = BeanFactory::newBean('tag_Tags');
             if ($tagObj->getTagUserACL($beanObj->module_name) != 'Restricted')
             {
+                //$tagObj->removeTagsFromBeanByName($beanObj, $tag);
                 $tagObj->removeTagsFromBean($beanObj, array($tag));
                 echo '<message>Success</div>';
             }
