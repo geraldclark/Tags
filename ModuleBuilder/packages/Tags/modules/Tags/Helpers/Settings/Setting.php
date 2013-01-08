@@ -2,13 +2,15 @@
 
 class Setting
 {
-
     protected $category;
+    protected $section;
     protected $database;
     protected $default_value;
     protected $fetched_value;
     protected $name;
     protected $possible_values;
+    protected $auto_create;
+    protected $label;
     public $value;
 
     /**
@@ -18,23 +20,35 @@ class Setting
      * @param $default_value - the default value
      * @param bool $database - whether or not this will be stored in the database config table or config_override.php
      */
-    public function __construct($category, $name, $default_value, $possible_values = null, $database = false)
+    public function __construct($auto_create, $label, $category, $section, $name, $default_value, $possible_values = null, $database = false)
     {
         $this->name = $name;
         $this->default_value = $default_value;
         $this->possible_values = $possible_values;
         $this->category = $category;
+        $this->section = $section;
         $this->database = $database;
+        $this->auto_create = $auto_create;
+        $this->label = $label;
         $this->retrieve();
     }
 
     /**
      * Returns the name of the setting for use.
-     * @return mixed
+     * @return String
      */
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * Returns the control ID of the setting for use.
+     * @return String
+     */
+    public function getId()
+    {
+        return $this->section . '_' . $this->category . '_' . $this->name;
     }
 
     /**
@@ -46,17 +60,20 @@ class Setting
         {
             require_once('modules/Administration/Administration.php');
             $administrationObj = new Administration();
-            $administrationObj->retrieveSettings($this->category);
+            $administrationObj->retrieveSettings($this->category . '_' . $this->section);
 
-            if (!isset($administrationObj->settings["{$this->category}_{$this->name}"]))
+            if (!isset($administrationObj->settings["{$this->category}_{$this->section}_{$this->name}"]))
             {
                 $value = $this->retrieveFormat($this->default_value);
-                $administrationObj->saveSetting($this->category, $this->name, $value);
+                if ($this->auto_create)
+                {
+                    $administrationObj->saveSetting($this->category . '_' . $this->section, $this->name, $this->saveFormat($value));
+                }
                 $this->value = $value;
             }
             else
             {
-                $this->value = $this->retrieveFormat($administrationObj->settings["{$this->category}_{$this->name}"]);
+                $this->value = $this->retrieveFormat($administrationObj->settings["{$this->category}_{$this->section}_{$this->name}"]);
             }
         }
         else
@@ -65,17 +82,21 @@ class Setting
             $configuratorObj = new Configurator();
             $configuratorObj->loadConfig();
 
-            if (!isset($configuratorObj->config['custom_settings'][$this->category][$this->name]))
+            if (!isset($configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name]))
             {
                 $value = $this->retrieveFormat($this->default_value);
-                $configuratorObj->config['custom_settings'][$this->category][$this->name] = $value;
-                $configuratorObj->saveConfig();
+                $configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name] = $this->saveFormat($value);
+
+                if ($this->auto_create)
+                {
+                    $configuratorObj->saveConfig();
+                }
 
                 $this->value = $value;
             }
             else
             {
-                $this->value = $this->retrieveFormat($configuratorObj->config['custom_settings'][$this->category][$this->name]);
+                $this->value = $this->retrieveFormat($configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name]);
             }
         }
 
@@ -101,7 +122,7 @@ class Setting
         {
             require_once('modules/Administration/Administration.php');
             $administrationObj = new Administration();
-            $result = $administrationObj->saveSetting($this->category, $this->name, $this->saveFormat($this->value));
+            $result = $administrationObj->saveSetting($this->category . '_' . $this->section, $this->name, $this->saveFormat($this->value));
         }
         else
         {
@@ -109,7 +130,7 @@ class Setting
             $configuratorObj = new Configurator();
             $configuratorObj->loadConfig();
 
-            $configuratorObj->config['custom_settings'][$this->category][$this->name] = $this->saveFormat($this->value);
+            $configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name] = $this->saveFormat($this->value);
             $configuratorObj->saveConfig();
             $result = true;
         }
@@ -156,6 +177,62 @@ class Setting
     {
         //override this function
         return $value;
+    }
+
+    public function getEditView()
+    {
+        $html = "";
+        $id = $this->getId();
+
+        if ($this->possible_values !== null)
+        {
+            if (is_array($this->possible_values))
+            {
+                $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}\">";
+
+                foreach ($this->possible_values as $key=>$value)
+                {
+                    $label = translate($key, $this->category);
+                    if ($this->value == $value)
+                    {
+                        $html .= "<OPTION VALUE=\"{$value}\" SELECTED>{$label}</OPTION>";
+                    }
+                    else
+                    {
+                        $html .= "<OPTION VALUE=\"{$value}\">{$label}</OPTION>";
+                    }
+                }
+
+                $html .= "</SELECT>";
+            }
+            else
+            {
+                $html = "<input type=\"text\" name=\"{$id}\" value=\"{$this->value}\">";
+            }
+        }
+        else
+        {
+            $html = "<input type=\"text\" name=\"{$id}\" value=\"{$this->value}\">";
+        }
+
+        return $this->getEditViewContainer($html);
+    }
+
+    public function getEditViewContainer($innerHTML)
+    {
+        $label = translate($this->label, $this->category);
+        $html =<<<HTML
+
+        <td scope="row" width='25%'>
+            {$label}:
+        </td>
+        <td width='25%' >
+            {$innerHTML}
+        </td>
+
+HTML;
+
+        return $html;
     }
 }
 

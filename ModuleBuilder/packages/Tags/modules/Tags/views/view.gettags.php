@@ -53,7 +53,7 @@ class ViewGetTags extends SugarView
 
             //check user ACL
             $filterActive = "";
-            if (in_array($tagObj->getTagUserACL(), array("Restricted", "Limited")))
+            if (in_array($tagObj->getTagUserACL($module), array("Restricted", "Limited")))
             {
                 $filterActive = "tag_tags.status = 'Active' AND ";
             }

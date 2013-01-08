@@ -55,24 +55,23 @@ class ViewAddTags extends SugarView
             //add tags
             $tagObj = BeanFactory::newBean('tag_Tags');
 
-            if ($tagObj->getTagUserACL() != 'Restricted')
+            if ($tagObj->getTagUserACL($_REQUEST['record_module']) != 'Restricted')
             {
-                $tag_ids = $tagObj->addTagsToBeanByName($beanObj, $tag);
+                $tags = $tagObj->addTagsToBeanByName($beanObj, $tag);
 
-                if (empty($tag_ids))
+                if (empty($tags))
                 {
                     echo '<message>Failure - No tags were added.</message>';
                 }
                 else
-                {
-                    echo '<message>Success</message>';
+                {   $ids = implode(", ", array_keys($tags));
+                    echo "<message>Success: {$ids}</message>";
                 }
             }
             else
             {
                 echo '<message>Failure - This functionality is currently restricted.</message>';
             }
-
         }
         else
         {

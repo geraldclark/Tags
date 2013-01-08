@@ -113,17 +113,16 @@ class tag_Tags extends tag_Tags_sugar
         $availableModules = $this->getAvailableModules();
 
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
-
         $installedModules = array();
-        foreach ($settings->relationships->value as $key=>$relationship)
+        foreach ($availableModules  as $key=>$module)
         {
-            if (isset($availableModules[$key]) && $this->checkRelationships($key))
+            $settings = new TagSettings($key, false);
+
+            if (!empty($settings->relationship->value))
             {
                 $installedModules[$key] = $availableModules[$key];
             }
         }
-
 
         asort($installedModules);
         return $installedModules;
@@ -138,6 +137,7 @@ class tag_Tags extends tag_Tags_sugar
 
         $invalidModules = array(
             'tag_Taggers',
+            'tag_Tagger',
             'tag_Phrases',
             'tag_Tags',
             'Home',
@@ -229,17 +229,17 @@ class tag_Tags extends tag_Tags_sugar
      *
      * @return string - possible values are 'Editable', 'Limited' and 'Restricted'
      */
-    public function getTagUserACL()
+    public function getTagUserACL($module)
     {
         $taggerObj = BeanFactory::newBean('tag_Taggers');
-        if ($taggerObj->getTaggerBehavior() == 'Reevaluate' && $taggerObj->isTaggerEnabled())
+        if ($taggerObj->getTaggerBehavior($module) == 'Reevaluate' && $taggerObj->isTaggerEnabled($module))
         {
             return 'Restricted';
         }
         else
         {
             require_once('modules/tag_Tags/TagSettings.php');
-            $settings = new TagSettings();
+            $settings = new TagSettings($module);
             return $settings->acl->value;
         }
     }
@@ -278,6 +278,21 @@ class tag_Tags extends tag_Tags_sugar
             return;
         }
 
+        $relationshipObject = $moduleObj->$relationshipName->getRelationshipObject();
+
+        $joinTable = $relationshipObject->getRelationshipTable();
+        $join_key_lhs = $relationshipObject->__get('join_key_lhs');
+        $join_key_rhs = $relationshipObject->__get('join_key_rhs');
+
+        $subquery = "SELECT {$joinTable}.{$join_key_rhs} FROM {$joinTable} WHERE {$joinTable}.deleted = 0 AND {$joinTable}.{$join_key_lhs} in ({0})";
+
+        if ($inclusive)
+        {
+            $subquery .= " GROUP BY {$joinTable}.{$join_key_rhs} HAVING count({$joinTable}.{$join_key_rhs}) IN (SELECT count(*) from tag_tags where tag_tags.deleted = 0 and tag_tags.id in ({0}))";
+        }
+
+        /*
+        //removed for performance reasons
         $join = $moduleObj->$relationshipName->getJoin(array());
 
         $subquery = "SELECT {$moduleObj->table_name}.id FROM {$moduleObj->table_name} {$join} WHERE {$moduleObj->table_name}.deleted = 0 AND tag_tags.name_upper in ({0})";
@@ -286,8 +301,10 @@ class tag_Tags extends tag_Tags_sugar
         {
             $subquery .= " GROUP BY {$moduleObj->table_name}.id HAVING count({$moduleObj->table_name}.id) IN (SELECT count(*) from tag_tags where tag_tags.deleted = 0 and tag_tags.name_upper in ({0}))";
         }
+        */
 
         $subquery = str_replace("\n", " ", $subquery);
+        $subquery = preg_replace('/\s+/', ' ', $subquery);
 
         //add search defs
         $definition = array (
@@ -395,9 +412,9 @@ class tag_Tags extends tag_Tags_sugar
 
         //set relationship name in config
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
+        $settings = new TagSettings($module);
 
-        $settings->relationships->value[$module] = $relName;
+        $settings->relationship->value = $relName;
         $settings->save();
 
         if ($runRepair)
@@ -419,7 +436,7 @@ class tag_Tags extends tag_Tags_sugar
         }
 
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
+        $settings = new TagSettings($module, false);
 
         $db = DBManagerFactory::getInstance();
 
@@ -430,11 +447,10 @@ class tag_Tags extends tag_Tags_sugar
 
         if (
             !empty($module)
-            && isset($settings->relationships->value[$module])
-            && !empty($settings->relationships->value[$module])
+            && !empty($settings->relationship->value)
         )
         {
-            $relationshipExists = $relationshipObj->exists($settings->relationships->value[$module], $db);
+            $relationshipExists = $relationshipObj->exists($settings->relationship->value[$module], $db);
         }
 
         if (!$relationshipExists)
@@ -443,7 +459,7 @@ class tag_Tags extends tag_Tags_sugar
 
             if ($potentialRelationship === null)
             {
-                $settings->relationships->value[$module] = "";
+                $settings->relationship->value = "";
                 $settings->save();
                 return false;
             }
@@ -452,7 +468,7 @@ class tag_Tags extends tag_Tags_sugar
                 $GLOBALS['log']->info($this->log_prefix . "Updating config settings to use potential relationship '{$potentialRelationship}'.");
 
                 //update the config to use the found relationship
-                $settings->relationships->value[$module] = $potentialRelationship;
+                $settings->relationship->value = $potentialRelationship;
                 $settings->save();
                 return true;
             }
@@ -540,7 +556,7 @@ class tag_Tags extends tag_Tags_sugar
     {
         $tagIds = array();
 
-        if ($this->getTagUserACL() == 'Editable')
+        if ($this->getTagUserACL($module) == 'Editable')
         {
             $tagIds = $this->getTagIdsFromNames($tagNames, $module);
         }
@@ -607,7 +623,7 @@ class tag_Tags extends tag_Tags_sugar
     {
         $GLOBALS['log']->info($this->log_prefix . "Start tag save logic.'");
 
-        if ($this->getTagUserACL() != 'Restricted')
+        if ($this->getTagUserACL($bean->module_name) != 'Restricted')
         {
             $tagNames = $this->tagStringToArray($bean->{$this->tag_field});
 
@@ -638,13 +654,13 @@ class tag_Tags extends tag_Tags_sugar
         $taggerObj = BeanFactory::newBean('tag_Taggers');
 
         //if tagger is enabled
-        if ($taggerObj->isTaggerEnabled())
+        if ($taggerObj->isTaggerEnabled($bean->module_name))
         {
             $GLOBALS['log']->info($this->log_prefix . "Finding matches for {$bean->module_name}.");
 
             $results = $taggerObj->get_full_list('', " tag_taggers.status = 'Active' AND tag_taggers.monitored_module = '{$bean->module_name}' ");
 
-            if ($taggerObj->getTaggerBehavior() == 'Reevaluate')
+            if ($taggerObj->getTaggerBehavior($bean->module_name) == 'Reevaluate')
             {
                 //get current tags unfiltered
                 $currentTagIds = $this->getBeanTagIds($bean);
@@ -680,7 +696,7 @@ class tag_Tags extends tag_Tags_sugar
             //add tag difference
             $this->addTagDifference($selectedTagIds, $currentTagIds, $bean);
 
-            if (BeanFactory::newBean('tag_Taggers')->getTaggerBehavior() == 'Reevaluate')
+            if (BeanFactory::newBean('tag_Taggers')->getTaggerBehavior($bean->module_name) == 'Reevaluate')
             {
                 //remove tag difference
                 $this->removeTagDifference($selectedTagIds, $currentTagIds, $bean);
@@ -717,7 +733,7 @@ class tag_Tags extends tag_Tags_sugar
 
         $tagIds = array();
 
-        if ($this->getTagUserACL() == 'Editable')
+        if ($this->getTagUserACL($bean->module_name) == 'Editable')
         {
             $tagIds = $this->getTagIdsFromNames($tagArray, $bean->module_name);
         }
@@ -772,7 +788,7 @@ class tag_Tags extends tag_Tags_sugar
         {
             foreach ($results as $tagObj)
             {
-                $tagIds[$tagObj->id] = $tagObj->id;
+                $tagIds[$tagObj->id] = $tagObj->name;
 
                 if ($createNew)
                 {
@@ -793,11 +809,12 @@ class tag_Tags extends tag_Tags_sugar
                     $newTag->name = $tag;
                     $newTag->target_module = $module;
                     $newTag->save();
-                    $tagIds[$newTag->id] = $newTag->id;
+                    $tagIds[$newTag->id] = $newTag->name;
                 }
             }
         }
 
+        asort($tagIds, SORT_STRING);
         return $tagIds;
     }
 
@@ -812,7 +829,7 @@ class tag_Tags extends tag_Tags_sugar
         $GLOBALS['log']->info($this->log_prefix . "Retrieving tags for module '{$module}'.");
 
         $filterActive = "";
-        if (in_array($this->getTagUserACL(), array("Restricted", "Limited")))
+        if (in_array($this->getTagUserACL($module), array("Restricted", "Limited")))
         {
             $filterActive = "AND tag_tags.status = 'Active'";
         }
@@ -825,7 +842,7 @@ class tag_Tags extends tag_Tags_sugar
         {
             foreach ($results as $tagObj)
             {
-                $tags[strtoupper($tagObj->name_upper)] = $tagObj->name;
+                $tags[$tagObj->id] = $tagObj->name;
             }
         }
 
@@ -902,7 +919,7 @@ class tag_Tags extends tag_Tags_sugar
         require_once('include/utils.php');
 
         $relatedTags = array();
-        if (in_array($this->getTagUserACL(), array("Restricted", "Limited")))
+        if (in_array($this->getTagUserACL($bean->module_name), array("Restricted", "Limited")))
         {
             $relatedTags = $this->getBeanTags($bean, true);
         }
@@ -917,7 +934,7 @@ class tag_Tags extends tag_Tags_sugar
             $tags[strtolower($relatedTag->name)] = $relatedTag->name;
         }
 
-        ksort($tags);
+        asort($tags);
         $bean->{$this->tag_field} = encodeMultienumValue($tags);
     }
 
@@ -948,7 +965,7 @@ class tag_Tags extends tag_Tags_sugar
     public function removeTagsFromBean(&$bean, $tagIds)
     {
         $relationshipName = $this->loadBeanRelationshipToTags($bean);
-        foreach($tagIds as $tagId)
+        foreach($tagIds as $tagId=>$tagName)
         {
             $bean->$relationshipName->delete($bean->id, $tagId);
         }
@@ -962,6 +979,7 @@ class tag_Tags extends tag_Tags_sugar
      */
     public function addTagsToBean(&$bean, $tagIds)
     {
+        $tagIds = array_keys($tagIds);
         $relationshipName = $this->loadBeanRelationshipToTags($bean);
         $bean->$relationshipName->add($tagIds);
     }
@@ -974,12 +992,12 @@ class tag_Tags extends tag_Tags_sugar
     function loadBeanRelationshipToTags(&$bean)
     {
         require_once('modules/tag_Tags/TagSettings.php');
-        $settings = new TagSettings();
+        $settings = new TagSettings($bean->module_name);
 
-        if (isset($settings->relationships->value[$bean->module_name]) && !empty($settings->relationships->value[$bean->module_name]))
+        if (isset($settings->relationship->value) && !empty($settings->relationship->value))
         {
             //relate tags to record
-            $relationshipName = $settings->relationships->value[$bean->module_name];
+            $relationshipName = $settings->relationship->value;
 
             if(empty($bean->$relationshipName) && !$bean->load_relationship($relationshipName))
             {
@@ -990,7 +1008,7 @@ class tag_Tags extends tag_Tags_sugar
             return $relationshipName;
         }
 
-        //throw error
+        //log error
         $GLOBALS['log']->fatal($this->log_prefix . "The relationship config setting for {$bean->module_name} is missing! To correct this issue, open and save a tag record for this module.");
         return false;
     }

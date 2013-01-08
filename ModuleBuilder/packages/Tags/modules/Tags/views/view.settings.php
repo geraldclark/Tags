@@ -54,24 +54,19 @@ class ViewSettings extends SugarView
         if(!is_admin($current_user)) sugar_die($GLOBALS['app_strings']['ERR_NOT_ADMIN']);
 
         $tagObj = BeanFactory::newBean('tag_Tags');
+        require_once('modules/tag_Tags/TagSettings.php');
 
         if(isset($_POST['saveConfig']) && !empty($_POST['saveConfig']))
         {
-            $relationshipName = false;
+            $installedModules = $tagObj->getInstalledModules();
 
-            require_once('modules/tag_Tags/TagSettings.php');
-            $settings = new TagSettings();
+            foreach ($installedModules as $key => $moduleName)
+            {
+                require_once('modules/tag_Tags/TagSettings.php');
+                $settings = new TagSettings($key);
+                $settings->saveFromRequest();
+            }
 
-            //update config
-            $settings->status->value = $_POST['tagger_status'];
-            $settings->behavior->value = $_POST['tagger_behavior'];
-            $settings->session->value = $_POST['tagger_session'];
-            $settings->limit->value = $_POST['tagger_limit'];
-            $settings->days->value = $_POST['tagger_days'];
-            $settings->acl->value = $_POST['tag_acl'];
-            $settings->save();
-
-            //check relationships to install
             $installModules = array();
             foreach ($_REQUEST as $key=>$value)
             {
@@ -109,13 +104,206 @@ class ViewSettings extends SugarView
 
         $tagObj->runRelationshipChecks();
 
-        $sugar_smarty = new Sugar_Smarty();
-        $sugar_smarty->assign('MOD', $mod_strings);
-        $sugar_smarty->assign('APP', $app_strings);
-        $sugar_smarty->assign('config', $sugar_config);
-        $sugar_smarty->assign('imodules', $tagObj->getInstalledModules());
-        $sugar_smarty->assign('umodules', $tagObj->getUninstalledModules());
-        $sugar_smarty->display('modules/tag_Tags/tpls/settings.tpl');
+        $installedModules = $tagObj->getInstalledModules();
+        $uninstalledModules = $tagObj->getUninstalledModules();
+
+        $LBL_TAGGER_SETTINGS = translate('LBL_TAGGER_SETTINGS', 'tag_Taggers');
+        $LBL_TAG_SETTINGS = translate('LBL_TAG_SETTINGS', 'tag_Tags');
+        $LBL_AVAILABLE_MODULES = translate('LBL_AVAILABLE_MODULES', 'tag_Tags');
+        $LBL_CANCEL_BUTTON_TITLE = translate('LBL_CANCEL_BUTTON_TITLE');
+        $LBL_CANCEL_BUTTON_LABEL =translate('LBL_CANCEL_BUTTON_LABEL');
+
+        $LBL_SAVE_BUTTON_TITLE = translate('LBL_SAVE_BUTTON_TITLE');
+        $LBL_SAVE_BUTTON_KEY = translate('LBL_SAVE_BUTTON_KEY');
+        $LBL_SAVE_BUTTON_LABEL = translate('LBL_SAVE_BUTTON_LABEL');
+
+        $html = "";
+
+        $html .=<<<HTML
+        <div class="moduleTitle">
+            <h2> {$LBL_TAG_SETTINGS} </h2>
+            <div class="clear"></div>
+        </div>
+
+        <form name="Settings" method="POST" action="index.php" >
+        <input type='hidden' name='action' value='Settings'/>
+        <input type='hidden' name='module' value='tag_Tags'/>
+        <input type='hidden' name='saveConfig' value='1'/>
+
+        <style>
+            ul li { list-style-type: none;}
+        </style>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" class="actionsContainer">
+            <tr>
+                <td style="padding-bottom: 2px;" >
+                    <input title="{$LBL_SAVE_BUTTON_TITLE}" accessKey="{$LBL_SAVE_BUTTON_KEY}" class="button primary" id="btn_save" type="submit" name="save" value="{$LBL_SAVE_BUTTON_LABEL}" >
+                    &nbsp;<input title="{$LBL_CANCEL_BUTTON_TITLE}" id="btn_cancel" onclick="document.location.href='index.php?module=Administration&action=index'" class="button"  type="button" name="cancel" value="{$LBL_CANCEL_BUTTON_LABEL}" >
+                </td>
+            </tr>
+        </table>
+HTML;
+
+        $html .=<<<HTML
+
+        <table width="100%" cellpadding="0" cellspacing="10" border="0" class="actionsContainer">
+            <tr>
+                <td style="vertical-align: top;">
+                    <table width="100%" cellpadding="5" cellspacing="5" border="0" class="edit view">
+                        <tr>
+                            <th align="left" scope="row" colspan="4">
+                                <h4>
+                                {$LBL_AVAILABLE_MODULES}
+                                </h4>
+                            </th>
+                        </tr>
+HTML;
+        foreach ($uninstalledModules as $key=>$moduleName)
+        {
+            $html .=<<<HTML
+                <tr>
+                <td style="padding-bottom: 2px;" >
+                <input type="checkbox" name="install_{$key}">&nbsp;{$moduleName}
+                </td>
+                </tr>
+HTML;
+        }
+
+        $html .= '</table></td><td style="vertical-align: top;">';
+
+        foreach ($installedModules as $key => $moduleName)
+        {
+            require_once('modules/tag_Tags/TagSettings.php');
+            $settings = new TagSettings($key);
+
+            $status = $settings->status->getEditView();
+            $behavior = $settings->behavior->getEditView();
+            $limit = $settings->limit->getEditView();
+            $days = $settings->days->getEditView();
+            $session = $settings->session->getEditView();
+            $acl = $settings->acl->getEditView();
+
+            $html .=<<<HTML
+            <table width="100%" border="0" cellspacing="5" cellpadding="0" class="edit view">
+                <tr>
+                    <th align="left" scope="row" colspan="4">
+                        <h4>
+                        {$moduleName}
+                        </h4>
+                    </th>
+                </tr>
+                <tr>
+                    <td>
+                        <table id="taggerSettings" name="taggerSettings" width="100%" border="0" cellspacing="0" cellpadding="0" class="edit view">
+                            <tr>
+                                <th align="left" scope="row" colspan="4">
+                                    <h4>
+                                    {$LBL_TAGGER_SETTINGS}
+                                    </h4>
+                                </th>
+                            </tr>
+                            <tr>
+                                {$status}
+                                {$behavior}
+                            </tr>
+                            <tr>
+                                {$limit}
+                                {$days}
+                            </tr>
+                            <tr>
+                                {$session}
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </table>
+
+                        <table id="tagSettings" name="tagSettings" width="100%" border="0" cellspacing="1" cellpadding="0" class="edit view">
+                            <tr>
+                                <th align="left" scope="row" colspan="4">
+                                    <h4>
+                                    {$LBL_TAG_SETTINGS}
+                                    </h4>
+                                </th>
+                            </tr>
+                            <tr>
+                                {$acl}
+                                <td width='25%'>
+                                    &nbsp;
+                                </td>
+                                <td width='25%' >
+                                    &nbsp;
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+HTML;
+        }
+
+        $html .= "</td></tr></table>";
+
+        $html .=<<<HTML
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" class="actionsContainer">
+            <tr>
+
+                <td style="padding-bottom: 2px;" >
+                    <input title="{$LBL_SAVE_BUTTON_TITLE}" accessKey="{$LBL_SAVE_BUTTON_KEY}" class="button primary" id="btn_save" type="submit" name="save" value="{$LBL_SAVE_BUTTON_LABEL}" >
+                    &nbsp;<input title="{$LBL_CANCEL_BUTTON_TITLE}" id="btn_cancel" onclick="document.location.href='index.php?module=Administration&action=index'" class="button"  type="button" name="cancel" value="{$LBL_CANCEL_BUTTON_LABEL}" >
+                </td>
+            </tr>
+        </table>
+
+        </form>
+HTML;
+
+        foreach ($installedModules as $key => $moduleName)
+        {
+            require_once('modules/tag_Tags/TagSettings.php');
+            $settings = new TagSettings($key);
+
+            $behavior_id = $settings->behavior->getId();
+            $status_id = $settings->status->getId();
+            $acl_id = $settings->acl->getId();
+
+            $html .=<<<HTML
+
+            <script language="javascript" type="text/javascript">
+
+            function {$key}_checkTagger()
+            {
+                if ($('#{$behavior_id}').val() == 'Reevaluate' && $('#{$status_id}').val() == 'Active')
+                {
+                    $('#{$acl_id}').val('Restricted');
+                    $('#{$acl_id}').attr('disabled', true);
+                }
+                else
+                {
+                    $('#{$acl_id}').attr('disabled', false);
+                }
+            }
+
+            SUGAR.util.doWhen("typeof $ != 'undefined'", function(){
+
+                $("#{$behavior_id}").change(function(e) {
+                    {$key}_checkTagger();
+                });
+
+                $("#{$status_id}").change(function(e) {
+                    {$key}_checkTagger();
+                });
+
+                {$key}_checkTagger();
+
+            });
+
+            </script>
+HTML;
+        }
+
+        echo $html;
 	}
 
     /**
