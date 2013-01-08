@@ -143,12 +143,16 @@
                 handleResult(element, html);
             }
         });
-        {/literal}{/if}{/tag_acl}{literal}
+        {/literal}
+        {else}
+            $(element).attr('tagvalue', tagValue.trim());
+        {/if}{/tag_acl}{literal}
         }
         else if (action == 'popped')
         {
         {/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
             url = 'index.php?to_pdf=1&module=tag_Tags&action=RemoveTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&tag_id=' + escape(tagValue);
+
             $.ajax({
                 url: url,
                 global: false,
@@ -207,28 +211,36 @@
 
         SUGAR.util.doWhen("$('#{/literal}{$tag_id}_list{literal}').attr('class') == 'tagit'", function(){{/literal}
 
-            {foreach from=$values key=k item=i name=n}
-                $('#{$tag_id}_list{literal}').tagit("add", {label: '{/literal}{$i}{literal}', value: '{/literal}{$k}{literal}'});{/literal}
-            {/foreach}
+            {if $save_style eq 'Ajax'}
+                {foreach from=$values key=k item=i name=n}
+                    $('#{$tag_id}_list{literal}').tagit("add", {label: '{/literal}{$i}{literal}', value: '{/literal}{$k}{literal}'});{/literal}
+                {/foreach}
+            {else}
+                {foreach from=$values key=k item=i name=n}
+                    $('#{$tag_id}_list{literal}').tagit("add", {label: '{/literal}{$i}{literal}', value: '{/literal}{$i}{literal}'});{/literal}
+                {/foreach}
+            {/if}
 
             {if $tagSearchForm ne ''}
-                {literal}$(".tagit-choice").live('click', function(e) {
+                {literal}$("#{/literal}{$tag_id}_list{literal} .tagit-choice").live('click', function(e) {
                 tagvalue = $(this).attr('tagvalue').trim();
                 searchTag("{/literal}{$tag_field}{literal}", "{/literal}{$tag_module}{literal}", "{/literal}{$tagSearchForm}{literal}", "{/literal}{$tagSearchFormShort}{literal}", tagvalue);
             });
-
-            $('.tagit-close').live('click', function(e){
-                e.stopPropagation();
-            });
             {/literal}
+            {tag_acl required_access="Editable, Limited" module=$tag_module}
+            {literal}$('#{/literal}{$tag_id}_list{literal} .tagit-close').live('click', function(e){
+                e.stopPropagation();
+            });{/literal}
+            {/tag_acl}
+
             {/if}
             {literal}
 
             {/literal}
             {tag_acl required_access="Restricted" module=$tag_module}
                 {literal}
-                    $('.tagit-close').remove();
-                    $('.tagit-input').remove();
+                    $('#{/literal}{$tag_id}_list{literal} .tagit-close').remove();
+                    $('#{/literal}{$tag_id}_list{literal} .tagit-input').remove();
                 {/literal}
             {/tag_acl}
             {literal}
