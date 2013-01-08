@@ -964,6 +964,11 @@ class tag_Tags extends tag_Tags_sugar
      */
     public function removeTagsFromBean(&$bean, $tagIds)
     {
+        if (!is_array($tagIds))
+        {
+            $tagIds = array($tagIds);
+        }
+        
         $relationshipName = $this->loadBeanRelationshipToTags($bean);
         foreach($tagIds as $tagId=>$tagName)
         {
