@@ -221,6 +221,10 @@ $installdefs = array (
           'from' => '<basepath>/SugarModules/modules/tag_Tags',
           'to' => 'modules/tag_Tags',
       ),
+      28 => array(
+          'from' => '<basepath>/Files/custom/include/Smarty/plugins/function.tag_multienum_to_array.php',
+          'to' => 'custom/include/Smarty/plugins/function.tag_multienum_to_array.php',
+      ),
   ),
   'language' => 
   array (
