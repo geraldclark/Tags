@@ -156,7 +156,7 @@
                 dataType: "html",
                 success: function(html)
                 {
-                    //handleResult(element, html);
+                    handleResult(element, html);
                 }
             });
         {/literal}{/if}{/tag_acl}{literal}
