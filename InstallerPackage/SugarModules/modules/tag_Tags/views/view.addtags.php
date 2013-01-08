@@ -64,7 +64,7 @@ class ViewAddTags extends SugarView
                     echo '<message>Failure - No tags were added.</message>';
                 }
                 else
-                {   $ids = implode(", ", array_keys($tags));
+                {   $ids = implode(", ", $tags);
                     echo "<message>Success: {$ids}</message>";
                 }
             }
