@@ -145,11 +145,32 @@ class Setting
     {
         if ($this->possible_values !== null)
         {
-            if (is_array($this->possible_values))
+            if (is_array($this->possible_values) && !is_array($this->value))
             {
                 if (!in_array($this->value, $this->possible_values))
                 {
                     $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' was restored to its default value of '{$this->default_value}' after having an invalid value of '{$this->value}'.");
+                    $this->value = $this->default_value;
+                    $this->save();
+                }
+            }
+            elseif (is_array($this->possible_values) && is_array($this->value))
+            {
+                $save = false;
+
+                foreach ($this->value as $key=>$value)
+                {
+                    if (!in_array($value, $this->possible_values))
+                    {
+                        unset($this->value[$key]);
+
+                        $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' was had the value of '$value' removed because it is an invalid selection.");
+                        $save = true;
+                    }
+                }
+
+                if ($save)
+                {
                     $this->value = $this->default_value;
                     $this->save();
                 }
@@ -186,7 +207,7 @@ class Setting
 
         if ($this->possible_values !== null)
         {
-            if (is_array($this->possible_values))
+            if (is_array($this->possible_values) && !is_array($this->value))
             {
                 $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}\">";
 
@@ -194,6 +215,32 @@ class Setting
                 {
                     $label = translate($key, $this->category);
                     if ($this->value == $value)
+                    {
+                        $html .= "<OPTION VALUE=\"{$value}\" SELECTED>{$label}</OPTION>";
+                    }
+                    else
+                    {
+                        $html .= "<OPTION VALUE=\"{$value}\">{$label}</OPTION>";
+                    }
+                }
+
+                $html .= "</SELECT>";
+            }
+            elseif (is_array($this->possible_values) && is_array($this->value))
+            {
+                $count = count($this->possible_values);
+
+                if ($count > 10)
+                {
+                    $count = 10;
+                }
+
+                $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}\" MULTIPLE size=\"$count\">";
+
+                foreach ($this->possible_values as $key=>$value)
+                {
+                    $label = translate($key, $this->category);
+                    if (in_array($value, $this->value))
                     {
                         $html .= "<OPTION VALUE=\"{$value}\" SELECTED>{$label}</OPTION>";
                     }
