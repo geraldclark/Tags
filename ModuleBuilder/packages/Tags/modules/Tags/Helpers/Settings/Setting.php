@@ -164,7 +164,7 @@ class Setting
                     {
                         unset($this->value[$key]);
 
-                        $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' was had the value of '$value' removed because it is an invalid selection.");
+                        $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' had the value of '$value' removed because it is an invalid selection.");
                         $save = true;
                     }
                 }
