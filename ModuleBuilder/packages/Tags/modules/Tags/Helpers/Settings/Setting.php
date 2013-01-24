@@ -158,13 +158,14 @@ class Setting
             {
                 $save = false;
 
+
                 foreach ($this->value as $key=>$value)
                 {
-                    if (!in_array($value, $this->possible_values))
+                    if (!in_array($value, array_keys($this->possible_values)))
                     {
                         unset($this->value[$key]);
 
-                        $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' had the value of '$value' removed because it is an invalid selection.");
+                        $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' was had '$value' removed because it is an invalid selection.");
                         $save = true;
                     }
                 }
@@ -235,18 +236,17 @@ class Setting
                     $count = 10;
                 }
 
-                $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}\" MULTIPLE size=\"$count\">";
+                $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}[]\" MULTIPLE size=\"$count\">";
 
                 foreach ($this->possible_values as $key=>$value)
                 {
-                    $label = translate($key, $this->category);
-                    if (in_array($value, $this->value))
+                    if (in_array($key, $this->value))
                     {
-                        $html .= "<OPTION VALUE=\"{$value}\" SELECTED>{$label}</OPTION>";
+                        $html .= "<OPTION VALUE=\"{$key}\" SELECTED>{$value}</OPTION>";
                     }
                     else
                     {
-                        $html .= "<OPTION VALUE=\"{$value}\">{$label}</OPTION>";
+                        $html .= "<OPTION VALUE=\"{$key}\">{$value}</OPTION>";
                     }
                 }
 
