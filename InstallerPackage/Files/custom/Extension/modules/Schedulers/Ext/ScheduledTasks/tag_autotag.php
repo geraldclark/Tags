@@ -11,7 +11,6 @@ function tag_autotag()
 
     $days = $settings->days->value;
     $limit = $settings->limit->value;
-    $days = $settings->days->value;
 
     //update run time
     $settings->scheduler_last_run->value = TimeDate::getInstance()->nowDb();

@@ -40,6 +40,10 @@
     if (!$silent) echo $daysMessage . "<br>\r\n";
     $GLOBALS['log']->info($daysMessage);
 
+    $moduleMessage = $taggerObj->log_prefix . "Module: {$module}";
+    if (!$silent) echo $moduleMessage . "<br>\r\n";
+    $GLOBALS['log']->info($moduleMessage);
+
     $whereDateSQL = '';
 
     if ($days !== -1)
@@ -64,8 +68,22 @@
         $where = "{$moduleObj->table_name}.date_entered >= {$whereDateSQL}";
     }
 
-    $results = BeanFactory::newBean($module)->get_list("{$moduleObj->table_name}.date_modified ASC", $where, 0, $limit, $limit);
+    $order_by = "{$moduleObj->table_name}.date_modified ASC";
+    $results = $moduleObj->get_list($order_by, $where, 0, $limit, $limit);
     $results = $results["list"];
+
+    $resultCount = count($results);
+    if ($resultCount == 0)
+    {
+        $resultsMessage = $taggerObj->log_prefix . "No results found for {$moduleObj->module_name} [where] {$where} [order by] {$order_by} [limit] {$limit}.";
+    }
+    else
+    {
+        $resultsMessage = $taggerObj->log_prefix . "{$resultCount} result(s) found.";
+    }
+
+    if (!$silent) echo $resultsMessage . "<br>\r\n";
+    $GLOBALS['log']->info($resultsMessage);
 
     foreach ($results as $bean)
     {
@@ -73,7 +91,8 @@
         if (!$silent) echo $savingMessage . "<br>\r\n";
         $GLOBALS['log']->info($savingMessage);
 
-        $bean->save();
+        //Save the record
+        BeanFactory::getBean($module, $bean->id)->save();
     }
 
     $endMessage = $taggerObj->log_prefix . "End Auto-Tag.";
