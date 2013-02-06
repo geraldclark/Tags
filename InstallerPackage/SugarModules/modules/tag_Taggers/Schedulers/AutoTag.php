@@ -69,30 +69,40 @@
     }
 
     $order_by = "{$moduleObj->table_name}.date_modified ASC";
-    $results = $moduleObj->get_list($order_by, $where, 0, $limit, $limit);
-    $results = $results["list"];
 
-    $resultCount = count($results);
+    $sql = $moduleObj->create_new_list_query($order_by, $where, array('id'), array(), false);
+    $count_sql = $moduleObj->create_list_count_query($sql);
+
+    $sqlMessage = $taggerObj->log_prefix . "SQL: {$sql}";
+    if (!$silent) echo $sqlMessage . "<br>\r\n";
+    $GLOBALS['log']->info($sqlMessage);
+
+    $db = DBManagerFactory::getInstance();
+
+    $resultCount = (int)$db->getOne($count_sql);
+    $result = $db->limitQuery($sql, 0, $limit);
+
     if ($resultCount == 0)
     {
-        $resultsMessage = $taggerObj->log_prefix . "No results found for {$moduleObj->module_name} [where] {$where} [order by] {$order_by} [limit] {$limit}.";
+        $resultsMessage = $taggerObj->log_prefix . "No results found.";
+        if (!$silent) echo $resultsMessage . "<br>\r\n";
+        $GLOBALS['log']->info($resultsMessage);
     }
     else
     {
-        $resultsMessage = $taggerObj->log_prefix . "{$resultCount} result(s) found.";
-    }
+        $resultsMessage = $taggerObj->log_prefix . "{$resultCount} result(s) found but limited to {$limit}.";
+        if (!$silent) echo $resultsMessage . "<br>\r\n";
+        $GLOBALS['log']->info($resultsMessage);
 
-    if (!$silent) echo $resultsMessage . "<br>\r\n";
-    $GLOBALS['log']->info($resultsMessage);
+        while($row = $db->fetchByAssoc($result) )
+        {
+            $savingMessage = $taggerObj->log_prefix . "Saving {$moduleObj->module_name} / " . $row['id'];
+            if (!$silent) echo $savingMessage . "<br>\r\n";
+            $GLOBALS['log']->info($savingMessage);
 
-    foreach ($results as $bean)
-    {
-        $savingMessage = $taggerObj->log_prefix . "Saving {$moduleObj->module_name} / {$bean->id}";
-        if (!$silent) echo $savingMessage . "<br>\r\n";
-        $GLOBALS['log']->info($savingMessage);
-
-        //Save the record
-        BeanFactory::getBean($module, $bean->id)->save();
+            //Save the record
+            BeanFactory::getBean($module, $row['id'])->save();
+        }
     }
 
     $endMessage = $taggerObj->log_prefix . "End Auto-Tag.";
