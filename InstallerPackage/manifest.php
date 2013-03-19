@@ -30,7 +30,7 @@ $manifest = array (
     'acceptable_sugar_flavors' => array ('CE','PRO','CORP','ENT','ULT'),
     'acceptable_sugar_versions' => array(
         'exact_matches' => array (),
-        'regex_matches' => array ('6\\.[5-9]\\.[0-9]$'),
+        'regex_matches' => array ('6\\.5\\.(.*?)', '6\\.6\\.(.*?)', '6\\.6\\.(.*?)\\.(.*?)'),
     ),
     'readme' => '',
     'key' => 'tag',
