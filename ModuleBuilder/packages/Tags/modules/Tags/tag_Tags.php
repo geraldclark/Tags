@@ -32,6 +32,7 @@ class tag_Tags extends tag_Tags_sugar
 {
     var $log_prefix = 'Tag :: ';
     var $tag_field = 'tag_tags_c';
+    var $tag_modified_field = 'tag_modified_c';
 
     function tag_Tags()
     {
@@ -361,6 +362,32 @@ class tag_Tags extends tag_Tags_sugar
     {
         $GLOBALS['log']->info($this->log_prefix . "Creating relationship between {$module} and tag_Tags.");
 
+        //create modified field
+        require_once('modules/tag_Tags/Helpers/FieldHelper.php');
+
+        $fields = array (
+            //DateTime
+            array(
+                'name' => str_replace('_c', '',  $this->tag_modified_field),
+                'label' => 'LBL_' . strtoupper($this->tag_modified_field),
+                'type' => 'datetime',
+                'module' => $module,
+                'default_value' => '',
+                'help' => '',
+                'comment' => '',
+                'mass_update' => false, // true or false
+                'enable_range_search' => false, // true or false
+                'required' => false, // true or false
+                'reportable' => true, // true or false
+                'audited' => false, // true or false
+                'duplicate_merge' => false, // true or false
+                'importable' => 'true', // 'true', 'false' or 'required'
+            ),
+        );
+
+        $fieldHelper = new FieldHelper();
+        $fieldHelper->installCustomFields($fields);
+
         //create relationship
         require_once('modules/tag_Tags/Helpers/RelationshipHelper.php');
         $relHelper = new RelationshipHelper('tag_Tags');
@@ -394,6 +421,7 @@ class tag_Tags extends tag_Tags_sugar
 
         $labels = array();
         $labels[]= $relHelper->setupLabel('LBL_' . strtoupper($this->tag_field), 'Tags', $module);
+        $labels[]= $relHelper->setupLabel('LBL_TAG_MODIFIED_C', 'Tags Modified', $module);
         $labels = $relHelper->setupLabelsForManyToMany($module, $relName, $labels);
 
         $installDefs['language'] = $relHelper->createLabels($labels, $relName , $savePath);
@@ -611,6 +639,12 @@ class tag_Tags extends tag_Tags_sugar
         $this->removeTagsFromBean($bean, $removeTags);
     }
 
+    public function updateTagModified($bean)
+    {
+        $db = DBManagerFactory::getInstance();
+        $now = $GLOBALS['timedate']->getNow(false)->asDb();
+        $sql = "update {$bean->table_name} set {$bean->table_name}.tag_modified_c = '{$now}'";
+    }
     /**
      * Takes the current tag values from user input and updates the current selection
      *   - disabled tags are excluded from modification if the user ACL is 'Limited'
@@ -1021,6 +1055,41 @@ class tag_Tags extends tag_Tags_sugar
         //log error
         $GLOBALS['log']->fatal($this->log_prefix . "The relationship config setting for {$bean->module_name} is missing! To correct this issue, open and save a tag record for this module.");
         return false;
+    }
+
+    /**
+     * Processes the tags for a record.
+     *
+     * @param $bean - bean to modify tags for
+     */
+    function processTags($bean)
+    {
+        $taggerObj = BeanFactory::newBean('tag_Taggers');
+
+        if ($taggerObj->isTaggerEnabled($bean->module_name) && $taggerObj->getTaggerBehavior($bean->module_name) == 'Reevaluate')
+        {
+            //only run the tagger since it'll remove any non-matching tags anyway
+            $this->saveTaggerTags($bean);
+        }
+        else
+        {
+            //run both
+            $this->saveBeanTags($bean);
+            $this->saveTaggerTags($bean);
+        }
+
+        //remove request to avoid issues
+        $request = $_REQUEST;
+        $_REQUEST = array();
+
+        //update the tag_modified_c field without touching the date_modified
+        $moduleObj = BeanFactory::getBean($bean->module_name, $bean->id);
+        $moduleObj->update_date_modified = false;
+        $moduleObj->{$this->tag_modified_field} = $GLOBALS['timedate']->getNow(false)->asDb();
+        $moduleObj->save();
+
+        //set request back
+        $_REQUEST = $request;
     }
 }
 

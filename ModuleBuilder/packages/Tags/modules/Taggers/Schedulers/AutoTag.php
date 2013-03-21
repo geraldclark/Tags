@@ -68,7 +68,8 @@
         $where = "{$moduleObj->table_name}.date_entered >= {$whereDateSQL}";
     }
 
-    $order_by = "{$moduleObj->table_name}.date_modified ASC";
+    $tagObj = BeanFactory::newBean('tag_Tags');
+    $order_by = "{$moduleObj->get_custom_table_name()}.{$tagObj->tag_modified_field} ASC";
 
     $sql = $moduleObj->create_new_list_query($order_by, $where, array('id'), array(), false);
     $count_sql = $moduleObj->create_list_count_query($sql);
@@ -100,8 +101,9 @@
             if (!$silent) echo $savingMessage . "<br>\r\n";
             $GLOBALS['log']->info($savingMessage);
 
-            //Save the record
-            BeanFactory::getBean($module, $row['id'])->save();
+            //process tags for the record
+            $bean = BeanFactory::getBean($module, $row['id']);
+            BeanFactory::newBean('tag_Tags')->processTags($bean);
         }
     }
 

@@ -2,7 +2,7 @@
 
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
- /*********************************************************************************
+/*********************************************************************************
  * The contents of this file are subject to the SugarCRM Master Subscription
  * Agreement ("License") which can be viewed at
  * http://www.sugarcrm.com/crm/master-subscription-agreement
@@ -34,22 +34,22 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 class ViewSettings extends SugarView
 {
     public function preDisplay()
-   	{
-          global $current_user;
+    {
+        global $current_user;
 
-          if(!$current_user->is_admin)
-          {
-              sugar_die(translate("LBL_MUST_BE_ADMIN"));
-          }
+        if(!$current_user->is_admin)
+        {
+            sugar_die(translate("LBL_MUST_BE_ADMIN"));
+        }
 
-          parent::preDisplay();
-   	}
+        parent::preDisplay();
+    }
 
     /**
-	 * @see SugarView::display()
-	 */
-	public function display()
-	{
+     * @see SugarView::display()
+     */
+    public function display()
+    {
         global $current_user, $sugar_config, $mod_strings, $app_strings;
         if(!is_admin($current_user)) sugar_die($GLOBALS['app_strings']['ERR_NOT_ADMIN']);
 
@@ -148,7 +148,7 @@ HTML;
 
         <table width="100%" cellpadding="0" cellspacing="10" border="0" class="actionsContainer">
             <tr>
-                <td style="vertical-align: top;">
+                <td style="vertical-align: top; width:15%">
                     <table width="100%" cellpadding="5" cellspacing="5" border="0" class="edit view">
                         <tr>
                             <th align="left" scope="row" colspan="4">
@@ -304,7 +304,7 @@ HTML;
         }
 
         echo $html;
-	}
+    }
 
     /**
      * @param string $needle - string to find

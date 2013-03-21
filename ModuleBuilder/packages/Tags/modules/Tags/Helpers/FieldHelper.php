@@ -1,14 +1,7 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: jclark
- * Date: 10/23/12
- * Time: 3:09 PM
- * To change this template use File | Settings | File Templates.
- */
+
 class FieldHelper
 {
-
     /**
      * Adds a field to the custom/modules/{module}/metadata/SearchFields.php array
      * This will update an existing definition
@@ -82,5 +75,13 @@ class FieldHelper
         }
 
         return false;
+    }
+
+    function installCustomFields($fields)
+    {
+        require_once('ModuleInstall/ModuleInstaller.php');
+
+        $moduleInstaller = new ModuleInstaller();
+        $moduleInstaller->install_custom_fields($fields);
     }
 }
