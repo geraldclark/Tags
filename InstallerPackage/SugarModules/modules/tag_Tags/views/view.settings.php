@@ -169,7 +169,7 @@ HTML;
 HTML;
         }
 
-        $html .= '</table></td><td style="vertical-align: top;">';
+        $html .= '</table></td><td style="vertical-align: top;width:85%">';
 
         foreach ($installedModules as $key => $moduleName)
         {
