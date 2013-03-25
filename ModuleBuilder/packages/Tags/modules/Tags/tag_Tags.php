@@ -289,7 +289,7 @@ class tag_Tags extends tag_Tags_sugar
 
         if ($inclusive)
         {
-            $subquery .= " GROUP BY {$joinTable}.{$join_key_rhs} HAVING count({$joinTable}.{$join_key_rhs}) IN (SELECT count(*) from tag_tags where tag_tags.deleted = 0 and tag_tags.id in ({0}))";
+            $subquery .= " GROUP BY {$joinTable}.{$join_key_rhs} HAVING count({$joinTable}.{$join_key_rhs}) IN (SELECT count(tag_tags.id) from tag_tags where tag_tags.deleted = 0 and tag_tags.id in ({0}))";
         }
 
         /*
@@ -603,7 +603,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param array $currentTagIds - array of current tags to get diff from
      * @param object $bean - Bean to add tags to
      */
-    function addTagDifference($selectedTagIds, $currentTagIds, &$bean)
+    function addTagDifference($selectedTagIds, $currentTagIds, $bean)
     {
         //figure out which keys to add
         $addTags = array();
@@ -625,7 +625,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param array $currentTagIds - array of current tags to get diff from
      * @param object $bean - Bean to add tags to
      */
-    function removeTagDifference($selectedTagIds, $currentTagIds, &$bean)
+    function removeTagDifference($selectedTagIds, $currentTagIds, $bean)
     {
         $removeTags = array();
         foreach($currentTagIds as $id=>$name)
@@ -639,19 +639,13 @@ class tag_Tags extends tag_Tags_sugar
         $this->removeTagsFromBean($bean, $removeTags);
     }
 
-    public function updateTagModified($bean)
-    {
-        $db = DBManagerFactory::getInstance();
-        $now = $GLOBALS['timedate']->getNow(false)->asDb();
-        $sql = "update {$bean->table_name} set {$bean->table_name}.tag_modified_c = '{$now}'";
-    }
     /**
      * Takes the current tag values from user input and updates the current selection
      *   - disabled tags are excluded from modification if the user ACL is 'Limited'
      *
      * @param $bean - bean to update tags for
      */
-    public function saveBeanTags(&$bean)
+    public function saveBeanTags($bean)
     {
         $GLOBALS['log']->info($this->log_prefix . "Start tag save logic.'");
 
@@ -679,7 +673,7 @@ class tag_Tags extends tag_Tags_sugar
      *
      * @param $bean - bean to update tags for
      */
-    public function saveTaggerTags(&$bean)
+    public function saveTaggerTags($bean)
     {
         $GLOBALS['log']->info($this->log_prefix . "Start tagger save logic.'");
 
@@ -748,7 +742,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param string/array $tags - csv string or multiselect string will be converted to an array
      * @return array $tagIds - array containing the tag ids
      */
-    public function addTagsToBeanByName(&$bean, $tags)
+    public function addTagsToBeanByName($bean, $tags)
     {
         if (is_array($tags))
         {
@@ -893,7 +887,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param bool $filterActive - filters by active status if 'true'
      * @return array $tagIds - list of related tag ids
      */
-    public function getBeanTagIds(&$bean, $filterActive = false)
+    public function getBeanTagIds($bean, $filterActive = false)
     {
         $tagObjs = $this->getBeanTags($bean, $filterActive);
 
@@ -915,7 +909,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param bool $filterActive - filters by active status if 'true'
      * @return array $tagIds - list of related tag objects
      */
-    public function getBeanTags(&$bean, $filterActive = false)
+    public function getBeanTags($bean, $filterActive = false)
     {
         $filter=array();
         if ($filterActive)
@@ -947,7 +941,7 @@ class tag_Tags extends tag_Tags_sugar
      *
      * @param object $bean - bean to retrieve retrieve and set tags for display
      */
-    public function setBeanTags(&$bean)
+    public function setBeanTags($bean)
     {
         $GLOBALS['log']->info($this->log_prefix . "Populating Tags for {$bean->module_name} / {$bean->id}");
 
@@ -979,7 +973,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param object $bean - bean to retrieve tags from
      * @param array $tagNames - array of tag names
      */
-    public function removeTagsFromBeanByName(&$bean, $tagNames)
+    public function removeTagsFromBeanByName($bean, $tagNames)
     {
         $tagNames = $this->tagStringToArray($tagNames);
 
@@ -997,7 +991,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param object $bean - bean to retrieve tags from
      * @param array $tagIds - array of tag ids
      */
-    public function removeTagsFromBean(&$bean, $tagIds)
+    public function removeTagsFromBean($bean, $tagIds)
     {
         if (!is_array($tagIds))
         {
@@ -1020,7 +1014,7 @@ class tag_Tags extends tag_Tags_sugar
      * @param object $bean - bean to retrieve tags from
      * @param array $tagIds - array of tag ids
      */
-    public function addTagsToBean(&$bean, $tagIds)
+    public function addTagsToBean($bean, $tagIds)
     {
         $GLOBALS['log']->info($this->log_prefix . "Adding Tags: " . implode(", ", $tagIds));
 
@@ -1033,7 +1027,7 @@ class tag_Tags extends tag_Tags_sugar
      *
      * @param object $bean - bean to load relationship for
      */
-    function loadBeanRelationshipToTags(&$bean)
+    function loadBeanRelationshipToTags($bean)
     {
         require_once('modules/tag_Tags/TagSettings.php');
         $settings = new TagSettings($bean->module_name);
@@ -1078,6 +1072,15 @@ class tag_Tags extends tag_Tags_sugar
             $this->saveTaggerTags($bean);
         }
 
+        $this->syncBean($bean);
+    }
+
+    /**
+     * Updates the bean team sets and modified date for the bean
+     * @param $bean
+     */
+    function syncBean($bean)
+    {
         //remove request to avoid issues
         $request = $_REQUEST;
         $_REQUEST = array();
