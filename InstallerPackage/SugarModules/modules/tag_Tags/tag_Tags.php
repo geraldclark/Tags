@@ -1076,7 +1076,7 @@ class tag_Tags extends tag_Tags_sugar
     }
 
     /**
-     * Updates the bean team sets and modified date for the bean
+     * Updates the tag modified date for the bean
      * @param $bean
      */
     function syncBean($bean)
