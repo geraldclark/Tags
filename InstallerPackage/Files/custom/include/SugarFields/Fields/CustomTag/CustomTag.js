@@ -45,3 +45,34 @@ function handleResult(element, response)
         }
     }
 }
+
+/**
+ * Populates the tags for a record
+ * @param module
+ * @param record_id
+ * @param control_id
+ */
+function populateTags(module, record_id, control_id)
+{
+
+    $('#'+control_id+'_loader').hide();
+    $('#'+control_id+'_content_loader').html('<img src="themes/default/images/img_loading.gif" align="absmiddle">');
+
+    url = 'index.php?to_pdf=1&module=tag_Tags&action=LoadTags&record_module='+module+'&record_id='+record_id;
+
+    $.getJSON(url, function(json){
+        $('#'+control_id+'_list').hide();
+        $('#'+control_id+'_list').find(".tagit-choice").remove();
+
+        $.each( json, function( key, value ) {
+            $('#'+control_id+'_list').tagit("add", {label: value, value: key});
+        });
+
+        $('#'+control_id+'_content_loader').hide();
+
+        $('#'+control_id+'_list').removeClass('prevent');
+        $('#'+control_id+'_list').show();
+
+
+    });
+}

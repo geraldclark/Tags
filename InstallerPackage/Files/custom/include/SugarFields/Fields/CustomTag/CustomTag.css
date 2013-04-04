@@ -9,7 +9,7 @@ ul.tagit input {
     position: absolute;
     cursor: default;
     list-style: none;
-    margin: 25px 0 0;
+    margin: 0px 0 0;
     padding: 0;
     border: 1px solid #E5E5E5;
     border-top: none;
@@ -131,9 +131,9 @@ ul.tagit li.tagit-new {
 ul.tagit li.tagit-choice input {
     display: block;
     float: left;
-    margin: 0 5px 0 0;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    margin: 0 0 0 0;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 ul.tagit li.tagit-choice a.tagit-close {
@@ -155,7 +155,7 @@ ul.tagit li.tagit-choice a.tagit-close {
     /*
     text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
     */
-    padding: 0px 0px 5px 2px;
+    padding: 0px 0px 0px 0px;
     text-shadow: none;
     font-size: 11px;
 }

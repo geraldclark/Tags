@@ -25,29 +25,20 @@
  * governing these rights and limitations under the License.  Portions created
  * by SugarCRM are Copyright (C) 2004-2012 SugarCRM, Inc.; All Rights Reserved.
  ********************************************************************************/
-
 *}
 
 {tag_get_view id=$tag_record_id}
 {tag_get_search_layout module=$tag_module field=$tag_field}
-{tag_multienum_to_array string=$tag_value assign="values" module=$tag_module}
 
-{if (($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView' || $view_action eq 'index') && ($values|@count gt 0)}
-    {if $values|@count == 1 }
-        {$values|@count} Tag
-        {elseif $values|@count gt 1}
-        {$values|@count} Tags
+
+{if (($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView' || $view_action eq 'index')}
+
+    {if ($tag_value ne '')}
+        <a href="javascript:void(0);" id="{$tag_id}_loader" onclick="populateTags('{$tag_module}','{$tag_record_id}', '{$tag_id}');">
+            {$tag_value} {sugar_getimage name="moreItems.png" width="10" height="10"}
+        </a>
     {/if}
 
-<a href="javascript:void(0);" id="{$tag_id}_less" style="display:none;" onclick="$(this).hide();$('#all_{$tag_id}').hide();$('#{$tag_id}_more').show();">
-    <span id="{$tag_id}_less">{sugar_getimage name="lessItems.png" width="10" height="10"}</span>
-</a>
-<a href="javascript:void(0);" id="{$tag_id}_more" onclick="$(this).hide();$('#all_{$tag_id}').show();$('#{$tag_id}_less').show();">
-    <span id="{$tag_id}_more">{sugar_getimage name="moreItems.png" width="10" height="10"}</span>
-</a>
-
-<span id="all_{$tag_id}" style="display:none;">
-<br>
 {/if}
 
 {if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') }
@@ -56,11 +47,11 @@
         {foreach from=$values key=k item=i name=n}
             {$i}{if !$smarty.foreach.n.last}, {/if}
         {/foreach}
-    {else}
+        {else}
         <script src="custom/include/SugarFields/Fields/CustomTag/CustomTag.js" type="text/javascript" id="CustomTagFunctions"></script>
 
         {foreach from=$values key=k item=i name=n}
-        <a href="javascript:void(0);" id="{$tag_id}_{$k}" onclick="searchTag('{$tag_field}', '{$tag_module}', '{$tagSearchForm}', '{$tagSearchFormShort}', '{$k}');">{$i}</a>{if !$smarty.foreach.n.last}, {/if}
+            <a href="javascript:void(0);" id="{$tag_id}_{$k}" onclick="searchTag('{$tag_field}', '{$tag_module}', '{$tagSearchForm}', '{$tagSearchFormShort}', '{$k}');">{$i}</a>{if !$smarty.foreach.n.last}, {/if}
         {/foreach}
 
     {/if}
@@ -105,166 +96,152 @@
     {/tag_acl}
     {literal}
 
-    .hideAtStart
-    {
-        display: none;
-    }
-
     </style>
     <script>
 
     SUGAR.util.doWhen("typeof $('#{/literal}{$tag_id}{literal}').tagit != 'undefined'", function(){
 
-        $('#{/literal}{$tag_id}_list{literal}').tagit({
-        highlightOnExistColor: '#327FC3',
-        caseSensitive: false,
-        allowSpaces: true,
-        allowNewTags: {/literal}{tag_acl required_access="Editable" module=$tag_module}true{/tag_acl}{tag_acl required_access="Restricted, Limited" module=$tag_module}false{/tag_acl}{literal},
-        singleFieldDelimiter: ",",
-        {/literal}{if $save_style eq 'Submit'}select: true,{/if}{literal}
-        triggerKeys: ['enter', 'comma', 'tab'],
-        tagsChanged: function(tagValue, action, element)
-        {
-            //prevent double quotes
-            tagValue = tagValue.replace(/["]/g, "");
+    $('#{/literal}{$tag_id}_list{literal}').tagit({
+    highlightOnExistColor: '#327FC3',
+    caseSensitive: false,
+    allowSpaces: true,
+    allowNewTags: {/literal}{tag_acl required_access="Editable" module=$tag_module}true{/tag_acl}{tag_acl required_access="Restricted, Limited" module=$tag_module}false{/tag_acl}{literal},
+    singleFieldDelimiter: ",",
+    {/literal}{if $save_style eq 'Submit'}select: true,{/if}{literal}
+    triggerKeys: ['enter', 'comma', 'tab'],
+tagsChanged: function(tagValue, action, element)
+{
+    //prevent double quotes
+    tagValue = tagValue.replace(/["]/g, "");
 
-        if (action == 'added' && $('#{/literal}{$tag_id}{literal}_content').hasClass('hideAtStart') == false)
-        {
-        {/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
+        if (action == 'added' && $('#{/literal}{$tag_id}{literal}_list').hasClass('prevent') == false)
+{
+{/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
         url = 'index.php?to_pdf=1&module=tag_Tags&action=AddTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&tag_name=' + escape(tagValue);
 
-        $.ajax({
-            url: url,
-            global: false,
-            type: "POST",
-            dataType: "html",
-            success: function(html)
-            {
-                handleResult(element, html);
-            }
-        });
-        {/literal}
-        {else}
-            $(element).attr('tagvalue', tagValue.trim());
-        {/if}{/tag_acl}{literal}
-        }
-        else if (action == 'popped')
+    $.ajax({
+        url: url,
+        global: false,
+        type: "POST",
+        dataType: "html",
+        success: function(html)
         {
-        {/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
-            url = 'index.php?to_pdf=1&module=tag_Tags&action=RemoveTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&tag_id=' + escape(tagValue);
-
-            $.ajax({
-                url: url,
-                global: false,
-                type: "POST",
-                dataType: "html",
-                success: function(html)
-                {
-                    handleResult(element, html);
-                }
-            });
-        {/literal}{/if}{/tag_acl}{literal}
+            handleResult(element, html);
         }
+    });
+{/literal}
+    {else}
+    $(element).attr('tagvalue', tagValue.trim());
+{/if}{/tag_acl}{literal}
+}
+else if (action == 'popped')
+{
+{/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{if $save_style eq 'Ajax'}{literal}
+    url = 'index.php?to_pdf=1&module=tag_Tags&action=RemoveTags&record_module={/literal}{$tag_module}{literal}&record_id={/literal}{$tag_record_id}{literal}&tag_id=' + escape(tagValue);
 
-        {/literal}{if $save_style eq 'Submit'}{literal}
-            //populate hidden tag field
-            var tagKeys = '';
-        $('#{/literal}{$tag_id}{literal}_list li').each(function(i, li) {
-            tag = $(li).attr('tagvalue');
-            if (tag !== undefined && tag != '' && tag != 'undefined' && tag != null)
+    $.ajax({
+        url: url,
+        global: false,
+        type: "POST",
+        dataType: "html",
+        success: function(html)
+        {
+            handleResult(element, html);
+        }
+    });
+{/literal}{/if}{/tag_acl}{literal}
+}
+
+{/literal}{if $save_style eq 'Submit'}{literal}
+    //populate hidden tag field
+    var tagKeys = '';
+    $('#{/literal}{$tag_id}{literal}_list li').each(function(i, li) {
+        tag = $(li).attr('tagvalue');
+        if (tag !== undefined && tag != '' && tag != 'undefined' && tag != null)
+        {
+            if (tagKeys == '')
             {
-                if (tagKeys == '')
-                {
-                    tagKeys = tag
-                }
-                else
-                {
-                    tagKeys = tagKeys + '^,^' + tag;
-                }
+                tagKeys = tag
             }
-        });
+            else
+            {
+                tagKeys = tagKeys + '^,^' + tag;
+            }
+        }
+    });
 
         $('#{/literal}{$tag_id}{literal}').val('^'+tagKeys+'^');
-        {/literal}{/if}{literal}
+{/literal}{/if}{literal}
 
-        }{/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{literal},
-        tagSource: function(search, showChoices) {
-            tagurl = 'index.php?to_pdf=1&module=tag_Tags&action=GetTags&record_module={/literal}{$tag_module}{literal}';
-            var that = this;
-            $.ajax({
-                url: tagurl,
-                data: {q: search.term},
-                dataType: "json",
-                success: function(data) {
+}{/literal}{tag_acl required_access="Editable, Limited" module=$tag_module}{literal},
+tagSource: function(search, showChoices) {
+    tagurl = 'index.php?to_pdf=1&module=tag_Tags&action=GetTags&record_module={/literal}{$tag_module}{literal}';
+    var that = this;
+    $.ajax({
+        url: tagurl,
+        data: {q: search.term},
+        dataType: "json",
+        success: function(data) {
 
-                    for (var i = 0; i < data.length; i++)
-                    {
-                        //hack to fix html entities like single quotes
-                        data[i] = $("<div/>").html(data[i]).text();
-                    }
+            for (var i = 0; i < data.length; i++)
+            {
+                //hack to fix html entities like single quotes
+                data[i] = $("<div/>").html(data[i]).text();
+            }
 
-                    showChoices(data);
-                }
-            });
-        }{/literal}{/tag_acl}{literal}
-        });
-
-        SUGAR.util.doWhen("$('#{/literal}{$tag_id}_list{literal}').attr('class') == 'tagit'", function(){{/literal}
-
-            {if $save_style eq 'Ajax'}
-                {foreach from=$values key=k item=i name=n}
-                    $('#{$tag_id}_list{literal}').tagit("add", {label: '{/literal}{$i}{literal}', value: '{/literal}{$k}{literal}'});{/literal}
-                {/foreach}
-            {else}
-                {foreach from=$values key=k item=i name=n}
-                    $('#{$tag_id}_list{literal}').tagit("add", {label: '{/literal}{$i}{literal}', value: '{/literal}{$i}{literal}'});{/literal}
-                {/foreach}
-            {/if}
-
-            {if $tagSearchForm ne ''}
-                {literal}$("#{/literal}{$tag_id}_list{literal} .tagit-choice").live('click', function(e) {
-                tagvalue = $(this).attr('tagvalue').trim();
-                searchTag("{/literal}{$tag_field}{literal}", "{/literal}{$tag_module}{literal}", "{/literal}{$tagSearchForm}{literal}", "{/literal}{$tagSearchFormShort}{literal}", tagvalue);
-            });
-            {/literal}
-            {tag_acl required_access="Editable, Limited" module=$tag_module}
-            {literal}$('#{/literal}{$tag_id}_list{literal} .tagit-close').live('click', function(e){
-                e.stopPropagation();
-            });{/literal}
-            {/tag_acl}
-
-            {/if}
-            {literal}
-
-            {/literal}
-            {tag_acl required_access="Restricted" module=$tag_module}
-                {literal}
-                    $('#{/literal}{$tag_id}_list{literal} .tagit-close').remove();
-                    $('#{/literal}{$tag_id}_list{literal} .tagit-input').remove();
-                {/literal}
-            {/tag_acl}
-            {literal}
-
-            $('#{/literal}{$tag_id}{literal}_load').remove();
-            $('#{/literal}{$tag_id}{literal}_content').removeClass('hideAtStart');
-        });
+            showChoices(data);
+        }
     });
+}{/literal}{/tag_acl}{literal}
+});
+
+    SUGAR.util.doWhen("$('#{/literal}{$tag_id}_list{literal}').attr('class') == 'tagit'", function(){{/literal}
+
+    {if $tagSearchForm ne ''}
+        {literal}$("#{/literal}{$tag_id}_list{literal} .tagit-choice").live('click', function(e) {
+        tagvalue = $(this).attr('tagvalue').trim();
+            searchTag("{/literal}{$tag_field}{literal}", "{/literal}{$tag_module}{literal}", "{/literal}{$tagSearchForm}{literal}", "{/literal}{$tagSearchFormShort}{literal}", tagvalue);
+    });
+    {/literal}
+        {tag_acl required_access="Editable, Limited" module=$tag_module}
+            {literal}$('#{/literal}{$tag_id}_list{literal} .tagit-close').live('click', function(e){
+            e.stopPropagation();
+        });{/literal}
+        {/tag_acl}
+
+    {/if}
+    {literal}
+
+    {/literal}
+    {tag_acl required_access="Restricted" module=$tag_module}
+    {literal}
+            $('#{/literal}{$tag_id}_list{literal} .tagit-close').remove();
+            $('#{/literal}{$tag_id}_list{literal} .tagit-input').remove();
+    {/literal}
+    {/tag_acl}
+    {literal}
+});
+});
 
 </script>
 {/literal}
 
-    <span id="{$tag_id}_load">
-        <img src="themes/default/images/img_loading.gif" align="absmiddle">
+    <span id="{$tag_id}_content_loader"></span>
+    <span id="{$tag_id}_content" >
+        <ul id="{$tag_id}_list" class="prevent"></ul>
     </span>
 
-    <span id="{$tag_id}_content" class="hideAtStart">
-        <ul id="{$tag_id}_list"></ul>
-        {if $save_style eq 'Submit'}
-            <input type="hidden" value="{$tag_value}" name="{$tag_id}" id="{$tag_id}"/>
-        {/if}
-    </span>
+    {if $save_style eq 'Submit'}
+        <input type="hidden" value="{$tag_value}" name="{$tag_id}" id="{$tag_id}"/>
+    {/if}
 {/if}
 
-{if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView'}
+{*if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView'}
 </span>
+{/if*}
+
+{if (($view_action eq 'DetailView' || $view_action eq 'EditView' )&& $view_module eq $tag_module)}
+    <script>
+        populateTags('{$tag_module}','{$tag_record_id}', '{$tag_id}');
+    </script>
 {/if}

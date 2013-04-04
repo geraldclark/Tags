@@ -444,7 +444,7 @@ class tag_Tags extends tag_Tags_sugar
             'name' => $this->tag_field,
             'type' => 'CustomTag',
             'comment' => 'Add this field to your EditView and DetailView.',
-            'source' => 'custom_fields',
+            'source' => 'non-db',
             'dbType' => 'non-db',
             'studio' => 'visible',
             'vname' => 'LBL_' . strtoupper($this->tag_field),
