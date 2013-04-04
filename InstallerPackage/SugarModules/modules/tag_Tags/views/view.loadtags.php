@@ -29,9 +29,9 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
  * by SugarCRM are Copyright (C) 2004-2012 SugarCRM, Inc.; All Rights Reserved.
  ********************************************************************************/
 
-/* Action used to remove tags matching search text */
+/* Action used to lookup tags matching search text */
 
-class ViewRemoveTags extends SugarView
+class ViewLoadTags extends SugarView
 {
     /**
 	 * @see SugarView::display()
@@ -43,27 +43,19 @@ class ViewRemoveTags extends SugarView
             && !empty($_REQUEST['record_module'])
             && isset($_REQUEST['record_id'])
             && !empty($_REQUEST['record_id'])
-            && isset($_REQUEST['tag_id'])
-            && !empty($_REQUEST['tag_id'])
             )
         {
-            $tag = trim(urldecode($_REQUEST['tag_id']));
+            $bean = BeanFactory::getBean($_REQUEST['record_module'], $_REQUEST['record_id']);
+            $tagObjs = BeanFactory::newBean('tag_Tags')->getBeanTags($bean, true);
 
-            //load bean
-            $beanObj = BeanFactory::getBean($_REQUEST['record_module'], $_REQUEST['record_id']);
+            $tags = array();
+            foreach ($tagObjs as $tagObj)
+            {
+                $tags[$tagObj->id] = $tagObj->name;
+            }
 
-            //remove tags
-            $tagObj = BeanFactory::newBean('tag_Tags');
-            if ($tagObj->getTagUserACL($beanObj->module_name) != 'Restricted')
-            {
-                $tagObj->removeTagsFromBean($beanObj, array($tag));
-                $tagObj->syncBean($beanObj);
-                echo '<message>Success</div>';
-            }
-            else
-            {
-                echo '<message>Failure - This functionality is currently restricted.</message>';
-            }
+            asort($tags);
+            echo json_encode($tags);
         }
         else
         {

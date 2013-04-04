@@ -32,7 +32,9 @@ class tag_Tags extends tag_Tags_sugar
 {
     var $log_prefix = 'Tag :: ';
     var $tag_field = 'tag_tags_c';
-    var $tag_modified_field = 'tag_modified_c';
+    var $tag_modified_field = 'tag_update_c';
+    var $tag_count_field = 'tag_count_c';
+    var $tag_search_field = 'tag_search_c';
 
     function tag_Tags()
     {
@@ -349,7 +351,8 @@ class tag_Tags extends tag_Tags_sugar
 
         foreach ($installedModules as $installedModule)
         {
-            $this->addSearchField($installedModule);
+            //removed for redesign of search
+            //$this->addSearchField($installedModule);
             $this->checkHooks($installedModule);
         }
     }
@@ -364,17 +367,18 @@ class tag_Tags extends tag_Tags_sugar
 
         //create modified field
         require_once('modules/tag_Tags/Helpers/FieldHelper.php');
+        require_once('modules/tag_Tags/Helpers/StringHelper.php');
 
         $fields = array (
-            //DateTime
+            //DateTime for modified
             array(
-                'name' => str_replace('_c', '',  $this->tag_modified_field),
+                'name' => StringHelper::str_last_replace('_c', '',  $this->tag_modified_field),
                 'label' => 'LBL_' . strtoupper($this->tag_modified_field),
                 'type' => 'datetime',
                 'module' => $module,
                 'default_value' => '',
                 'help' => '',
-                'comment' => '',
+                'comment' => 'This field should remain hidden.',
                 'mass_update' => false, // true or false
                 'enable_range_search' => false, // true or false
                 'required' => false, // true or false
@@ -383,10 +387,45 @@ class tag_Tags extends tag_Tags_sugar
                 'duplicate_merge' => false, // true or false
                 'importable' => 'true', // 'true', 'false' or 'required'
             ),
+            //Integer for related tag count
+            array(
+                'name' => StringHelper::str_last_replace('_c', '',  $this->tag_count_field),
+                'label' => 'LBL_' . strtoupper($this->tag_count_field),
+                'type' => 'int',
+                'module' => $module,
+                'default_value' => '0',
+                'help' => '',
+                'comment' => 'This field should remain hidden.',
+                'mass_update' => false, // true or false
+                'enable_range_search' => false, // true or false
+                'required' => false, // true or false
+                'reportable' => true, // true or false
+                'audited' => false, // true or false
+                'duplicate_merge' => false, // true or false
+                'importable' => 'true', // 'true', 'false' or 'required'
+            ),
+            //Multiselect for searching tags
+            array(
+                'name' => StringHelper::str_last_replace('_c', '',  $this->tag_search_field),
+                'label' => 'LBL_' . strtoupper($this->tag_search_field),
+                'type' => 'multienum',
+                'module' => $module,
+                'help' => '',
+                'comment' => 'Add this field to your search views.',
+                //'ext1' => $module . '_tag_search_dom', //maps to options - specify list name
+                'default_value' => '', //key of entry in specified list
+                'mass_update' => false, // true or false
+                'required' => false, // true or false
+                'reportable' => true, // true or false
+                'audited' => false, // true or false
+                'importable' => 'true', // 'true', 'false' or 'required'
+                'duplicate_merge' => false, // true or false
+            ),
         );
 
-        $fieldHelper = new FieldHelper();
+        $fieldHelper = new FieldHelper($module);
         $fieldHelper->installCustomFields($fields);
+        $fieldHelper->writeVardefExtension($this->tag_search_field, array('function'=>'tag_getModuleTags'));
 
         //create relationship
         require_once('modules/tag_Tags/Helpers/RelationshipHelper.php');
@@ -404,7 +443,8 @@ class tag_Tags extends tag_Tags_sugar
         $vardefs[$module][] = array(
             'name' => $this->tag_field,
             'type' => 'CustomTag',
-            'source' => 'non-db',
+            'comment' => 'Add this field to your EditView and DetailView.',
+            'source' => 'custom_fields',
             'dbType' => 'non-db',
             'studio' => 'visible',
             'vname' => 'LBL_' . strtoupper($this->tag_field),
@@ -421,7 +461,11 @@ class tag_Tags extends tag_Tags_sugar
 
         $labels = array();
         $labels[]= $relHelper->setupLabel('LBL_' . strtoupper($this->tag_field), 'Tags', $module);
-        $labels[]= $relHelper->setupLabel('LBL_TAG_MODIFIED_C', 'Tags Modified', $module);
+        $labels[]= $relHelper->setupLabel('LBL_' . strtoupper($this->tag_modified_field), 'Tags Modified', $module);
+        $labels[]= $relHelper->setupLabel('LBL_' . strtoupper($this->tag_count_field), 'Tag Count', $module);
+        $labels[]= $relHelper->setupLabel('LBL_' . strtoupper($this->tag_search_field), 'Tag Search', $module);
+        $labels[]= $relHelper->setupLabel(strtolower($module . '_tag_search_dom'), array(''), 'application');
+
         $labels = $relHelper->setupLabelsForManyToMany($module, $relName, $labels);
 
         $installDefs['language'] = $relHelper->createLabels($labels, $relName , $savePath);
@@ -445,10 +489,14 @@ class tag_Tags extends tag_Tags_sugar
         $settings->relationship->value = $relName;
         $settings->save();
 
+        //removed for redesign
+        /*
         if ($runRepair)
         {
+
             $this->addSearchField($module);
         }
+        */
 
         $GLOBALS['log']->info($this->log_prefix . "Relationship '{$relName}' created.");
     }
@@ -529,7 +577,7 @@ class tag_Tags extends tag_Tags_sugar
             check_logic_hook_file($module, "after_retrieve", $hook);
 
             //add tags to listview
-            $hook = Array(99999, 'Populate Tags Field', 'modules/tag_Tags/Hooks/TagHooks.php', 'TagHooks', 'PopulateTags');
+            $hook = Array(99999, 'Populate Tags Field with Count', 'modules/tag_Tags/Hooks/TagHooks.php', 'TagHooks', 'PopulateTagsCount');
             check_logic_hook_file($module, "process_record", $hook);
         }
     }
@@ -651,9 +699,31 @@ class tag_Tags extends tag_Tags_sugar
 
         if ($this->getTagUserACL($bean->module_name) != 'Restricted')
         {
-            $tagNames = $this->tagStringToArray($bean->{$this->tag_field});
+            $tags = $this->tagStringToArray($bean->{$this->tag_field});
+
+            $tagIds = array();
+            $tagNames = array();
+
+            require_once('modules/tag_Tags/Helpers/StringHelper.php');
+
+            foreach($tags as $tag)
+            {
+                if (StringHelper::isGUID($tag))
+                {
+                    $tagIds[] = $tag;
+                }
+                else
+                {
+                    $tagNames[] = $tag;
+                }
+            }
 
             $selectedTagIds = $this->getTagIdsFromNamesACL($tagNames, $bean->module_name);
+
+            foreach ($tagIds as $tagId)
+            {
+                $selectedTagIds[$tagId] = $tagId;
+            }
 
             //get current tags
             $currentTagIds = $this->getBeanTagIds($bean);
@@ -666,6 +736,33 @@ class tag_Tags extends tag_Tags_sugar
         }
 
         $GLOBALS['log']->info($this->log_prefix . "End tag save logic.'");
+    }
+
+    /**
+     * For performance, we can run the tagger process from the job queue instead of after_save
+     * @param $bean
+     */
+    public function queueTaggerJob($bean)
+    {
+        $GLOBALS['log']->info($this->log_prefix . "Sending tagger save to job queue.'");
+        require_once('include/SugarQueue/SugarJobQueue.php');
+
+        // First, let's create the new job
+        $job = new SchedulersJob();
+        $job->name = "Tagger Job - {$bean->module_name} / {$bean->id}";
+        // key piece, this is data we are passing to the job that it can use to run it.
+        $job->data = array('module' => $bean->module_name, 'id' => $bean->id);
+        //function to call
+        $job->target = "function::taggerJob";
+
+        global $current_user;
+        $job->assigned_user_id = $current_user->id; //user the job runs as
+
+        // Now push into the queue to run
+        $jq = new SugarJobQueue();
+        $jobid = $jq->submitJob($job);
+
+        $GLOBALS['log']->info($this->log_prefix . "Tagger job queued as job #{$jobid}");
     }
 
     /**
@@ -727,9 +824,6 @@ class tag_Tags extends tag_Tags_sugar
                 //remove tag difference
                 $this->removeTagDifference($selectedTagIds, $currentTagIds, $bean);
             }
-
-            //make sure we reset the bean tag field
-            $this->setBeanTags($bean);
         }
 
         $GLOBALS['log']->info($this->log_prefix . "End tagger save logic.'");
@@ -909,8 +1003,42 @@ class tag_Tags extends tag_Tags_sugar
      * @param bool $filterActive - filters by active status if 'true'
      * @return array $tagIds - list of related tag objects
      */
+    public function getBeanTagsCount($bean, $filterActive = false)
+    {
+        $GLOBALS['log']->info($this->log_prefix . "Retrieving tag count for {$bean->module_name} / {$bean->id}");
+
+        $relationshipName = $this->loadBeanRelationshipToTags($bean);
+        // $relationshipObject = $bean->$relationshipName->getRelationshipObject();
+        //$joinTable = $relationshipObject->getRelationshipTable();
+
+        //$join_key_lhs = $relationshipObject->__get('join_key_lhs');
+        //$join_key_rhs = $relationshipObject->__get('join_key_rhs');
+        $join = $bean->$relationshipName->getJoin(array());
+
+        $sql = "SELECT count(*) FROM {$bean->table_name} {$join} WHERE {$bean->table_name}.deleted = 0 AND {$bean->table_name}.id = '{$bean->id}'";
+
+        if ($filterActive)
+        {
+            $GLOBALS['log']->info($this->log_prefix . "Filtering tag count by 'Active' status");
+            $sql .= " AND tag_tags.status = 'Active'";
+        }
+
+        $db = DBManagerFactory::getInstance();
+        $count = $db->getOne($sql);
+        return $count;
+    }
+
+    /**
+     * Retrieves related tag beans from a selected bean
+     *
+     * @param object $bean - bean to retrieve related tags from
+     * @param bool $filterActive - filters by active status if 'true'
+     * @return array $tagIds - list of related tag objects
+     */
     public function getBeanTags($bean, $filterActive = false)
     {
+        $GLOBALS['log']->info($this->log_prefix . "Retrieving tags for {$bean->module_name} / {$bean->id}");
+
         $filter=array();
         if ($filterActive)
         {
@@ -933,6 +1061,43 @@ class tag_Tags extends tag_Tags_sugar
         else
         {
             return array();
+        }
+    }
+
+    /**
+     * Retrieves and sets related tags count to the tag field on the bean - for use on subpanels
+     *
+     * @param object $bean - bean to retrieve retrieve and set tags count for display
+     */
+    public function setBeanTagsCount($bean)
+    {
+        $GLOBALS['log']->info($this->log_prefix . "Populating Tag count for {$bean->module_name} / {$bean->id}");
+
+        //fetch value
+        if (($bean->{$this->tag_field} != '0' && $bean->{$this->tag_field} !== 0) && empty($bean->{$this->tag_count_field}))
+        {
+            $count = $this->getBeanTagsCount($bean, true);
+            $bean->{$this->tag_field} = $count;
+        }
+        else
+        {
+            $bean->{$this->tag_field} = $bean->{$this->tag_count_field};
+        }
+
+        if (!empty($bean->{$this->tag_field}))
+        {
+            if ($bean->{$this->tag_field} == '1')
+            {
+                $bean->{$this->tag_field} .= " Tag";
+            }
+            else
+            {
+                $bean->{$this->tag_field} .= " Tags";
+            }
+        }
+        else
+        {
+            $bean->{$this->tag_field} = '';
         }
     }
 
@@ -1000,7 +1165,7 @@ class tag_Tags extends tag_Tags_sugar
 
         $relationshipName = $this->loadBeanRelationshipToTags($bean);
 
-        $GLOBALS['log']->fatal($this->log_prefix . "Removing Tags: " . implode(", ", $tagIds));
+        $GLOBALS['log']->info($this->log_prefix . "Removing Tags: " . implode(", ", $tagIds));
 
         foreach($tagIds as $tagId)
         {
@@ -1081,18 +1246,22 @@ class tag_Tags extends tag_Tags_sugar
      */
     function syncBean($bean)
     {
-        //remove request to avoid issues
-        $request = $_REQUEST;
-        $_REQUEST = array();
+        //get active count
+        $count = $this->getBeanTagsCount($bean, true);
 
-        //update the tag_modified_c field without touching the date_modified
-        $moduleObj = BeanFactory::getBean($bean->module_name, $bean->id);
-        $moduleObj->update_date_modified = false;
-        $moduleObj->{$this->tag_modified_field} = $GLOBALS['timedate']->getNow(false)->asDb();
-        $moduleObj->save();
+        //get all bean tags for search
+        require_once('include/utils.php');
+        $tagIds = encodeMultienumValue($this->getBeanTagIds($bean));
 
-        //set request back
-        $_REQUEST = $request;
+        //get current time for modified
+        $stamp = $GLOBALS['timedate']->getNow(false)->asDb();
+
+        $cstmTable = $bean->get_custom_table_name();
+
+        $SQL = "UPDATE {$cstmTable} SET {$cstmTable}.{$this->tag_modified_field} = '{$stamp}', {$cstmTable}.{$this->tag_count_field} = '{$count}', {$cstmTable}.{$this->tag_search_field} = '{$tagIds}' where {$cstmTable}.id_c = '{$bean->id}'";
+
+        $db = DBManagerFactory::getInstance();
+        $db->query($SQL);
     }
 }
 

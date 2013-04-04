@@ -6,7 +6,6 @@ class SettingArray extends Setting
 {
     protected function retrieveFormat($value)
     {
-
         if (is_string($value) && $this->database)
         {
             $value = unserialize(base64_decode($value));
@@ -39,16 +38,26 @@ class SettingArray extends Setting
         return $value;
     }
 
-    public function save()
+    /**
+     * Checks if the value is an acceptable value
+     */
+    protected function checkPossibleValues()
     {
-
-        if (!is_array($this->value))
+        if ($this->possible_values !== null && !empty($this->value))
         {
-            $this->value = array($this->value);
+            if (is_array($this->possible_values) && is_array($this->value))
+            {
+                foreach ($this->value as $key=>$value)
+                {
+                    if (!in_array($value, array_keys($this->possible_values)))
+                    {
+                        unset($this->value[$key]);
+
+                        $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' was had '$value' removed because it is an invalid selection.");
+                    }
+                }
+            }
         }
-
-        parent::save();
     }
-}
 
-?>
+}

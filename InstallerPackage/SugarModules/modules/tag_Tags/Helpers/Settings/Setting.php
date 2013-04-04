@@ -14,12 +14,12 @@ class Setting
     public $value;
 
     /**
-     * Initializes a setting object
-     * @param $category - category of the setting
-     * @param $name - name of the setting
-     * @param $default_value - the default value
-     * @param bool $database - whether or not this will be stored in the database config table or config_override.php
-     */
+    * Initializes a setting object
+    * @param $category - category of the setting
+    * @param $name - name of the setting
+    * @param $default_value - the default value
+    * @param bool $database - whether or not this will be stored in the database config table or config_override.php
+    */
     public function __construct($auto_create, $label, $category, $section, $name, $default_value, $possible_values = null, $database = false)
     {
         $this->name = $name;
@@ -34,26 +34,34 @@ class Setting
     }
 
     /**
-     * Returns the name of the setting for use.
-     * @return String
+     * Sets the default value
      */
+    public function setDefaultValue()
+    {
+        $this->value = $this->default_value;
+    }
+
+    /**
+    * Returns the name of the setting for use.
+    * @return String
+    */
     public function getName()
     {
         return $this->name;
     }
 
     /**
-     * Returns the control ID of the setting for use.
-     * @return String
-     */
+    * Returns the control ID of the setting for use.
+    * @return String
+    */
     public function getId()
     {
         return $this->section . '_' . $this->category . '_' . $this->name;
     }
 
     /**
-     * Retrieves the settings value
-     */
+    * Retrieves the settings value
+    */
     protected function retrieve()
     {
         if ($this->database)
@@ -106,9 +114,9 @@ class Setting
     }
 
     /**
-     * Saves the updated value to the database
-     * @return bool|resource|void
-     */
+    * Saves the updated value to the database
+    * @return bool|resource|void
+    */
     public function save()
     {
         $this->checkPossibleValues();
@@ -129,9 +137,19 @@ class Setting
             require_once 'modules/Configurator/Configurator.php';
             $configuratorObj = new Configurator();
             $configuratorObj->loadConfig();
+            $value = $this->saveFormat($this->value);
 
-            $configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name] = $this->saveFormat($this->value);
+            if (is_array($value) && empty($value))
+            {
+                $configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name] = FALSE;
+            }
+            else
+            {
+                $configuratorObj->config['custom_settings'][$this->category][$this->section][$this->name] = $value;
+            }
+
             $configuratorObj->saveConfig();
+
             $result = true;
         }
 
@@ -139,8 +157,8 @@ class Setting
     }
 
     /**
-     * Checks if the value is an acceptable value
-     */
+    * Checks if the value is an acceptable value
+    */
     protected function checkPossibleValues()
     {
         if ($this->possible_values !== null)
@@ -150,15 +168,13 @@ class Setting
                 if (!in_array($this->value, $this->possible_values))
                 {
                     $GLOBALS['log']->fatal("Settings :: The setting '{$this->name}' was restored to its default value of '{$this->default_value}' after having an invalid value of '{$this->value}'.");
-                    $this->value = $this->default_value;
+                    $this->setDefaultValue();
                     $this->save();
                 }
             }
             elseif (is_array($this->possible_values) && is_array($this->value))
             {
                 $save = false;
-
-
                 foreach ($this->value as $key=>$value)
                 {
                     if (!in_array($value, array_keys($this->possible_values)))
@@ -170,9 +186,8 @@ class Setting
                     }
                 }
 
-                if ($save)
+                if($save)
                 {
-                    $this->value = $this->default_value;
                     $this->save();
                 }
             }
@@ -180,10 +195,10 @@ class Setting
     }
 
     /**
-     * Formats a value when being retrieved
-     * @param $value
-     * @return mixed
-     */
+    * Formats a value when being retrieved
+    * @param $value
+    * @return mixed
+    */
     protected function retrieveFormat($value)
     {
         //override this function
@@ -191,18 +206,28 @@ class Setting
     }
 
     /**
-     * Formats a value when being saved
-     * @param $value
-     * @return mixed
-     */
+    * Formats a value when being saved
+    * @param $value
+    * @return mixed
+    */
     protected function saveFormat($value)
     {
         //override this function
         return $value;
     }
 
-    public function getEditView()
+    /**
+     * @param string $elementStyle The style to assign to the element
+     * @return table cells
+     */
+    public function getEditView($elementStyle = '')
     {
+        $style = '';
+        if (!empty($elementStyle))
+        {
+            $style = 'style="' . $elementStyle . '"';
+        }
+
         $html = "";
         $id = $this->getId();
 
@@ -210,7 +235,7 @@ class Setting
         {
             if (is_array($this->possible_values) && !is_array($this->value))
             {
-                $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}\">";
+                $html = "<SELECT ID=\"{$id}\" NAME=\"{$id}\" {$style}>";
 
                 foreach ($this->possible_values as $key=>$value)
                 {
@@ -236,7 +261,7 @@ class Setting
                     $count = 10;
                 }
 
-                $html = "<SELECT  ID=\"{$id}\" NAME=\"{$id}[]\" MULTIPLE size=\"$count\">";
+                $html = "<SELECT ID=\"{$id}\" NAME=\"{$id}[]\" MULTIPLE size=\"$count\" {$style}>";
 
                 foreach ($this->possible_values as $key=>$value)
                 {
@@ -254,33 +279,34 @@ class Setting
             }
             else
             {
-                $html = "<input type=\"text\" name=\"{$id}\" value=\"{$this->value}\">";
+                $html = "<input type=\"text\" name=\"{$id}\" value=\"{$this->value}\" {$style}>";
             }
         }
         else
         {
-            $html = "<input type=\"text\" name=\"{$id}\" value=\"{$this->value}\">";
+            $html = "<input type=\"text\" name=\"{$id}\" value=\"{$this->value}\" {$style}>";
         }
 
         return $this->getEditViewContainer($html);
     }
 
+    /**
+     * @param $innerHTML The element to render in the table
+     * @return table cell strings
+     */
     public function getEditViewContainer($innerHTML)
     {
         $label = translate($this->label, $this->category);
         $html =<<<HTML
 
-        <td scope="row" width='25%'>
-            {$label}:
-        </td>
-        <td width='25%' >
-            {$innerHTML}
-        </td>
-
+            <td style="text-align:right;vertical-align:text-top;padding-left:25px;">
+                {$label}:
+            </td>
+            <td style="text-align:left;vertical-align:top;padding-left:10px;">
+                {$innerHTML}
+            </td>
 HTML;
 
         return $html;
     }
 }
-
-?>

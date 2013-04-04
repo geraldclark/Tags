@@ -225,6 +225,10 @@ $installdefs = array (
           'from' => '<basepath>/Files/custom/include/Smarty/plugins/function.tag_multienum_to_array.php',
           'to' => 'custom/include/Smarty/plugins/function.tag_multienum_to_array.php',
       ),
+      29 => array(
+          'from' => '<basepath>/Files/custom/Extension/application/Ext/Utils/tag_getModuleTags.php',
+          'to' => 'custom/Extension/application/Ext/Utils/tag_getModuleTags.php',
+      ),
   ),
   'language' => 
   array (

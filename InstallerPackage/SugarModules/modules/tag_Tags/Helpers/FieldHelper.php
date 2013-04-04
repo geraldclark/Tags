@@ -1,6 +1,8 @@
 <?php
 
-class FieldHelper
+require_once('modules/DynamicFields/DynamicField.php');
+
+class FieldHelper extends DynamicField
 {
     /**
      * Adds a field to the custom/modules/{module}/metadata/SearchFields.php array
@@ -77,11 +79,30 @@ class FieldHelper
         return false;
     }
 
+    /**
+     * Install custom fields
+     * @param $fields
+     */
     function installCustomFields($fields)
     {
         require_once('ModuleInstall/ModuleInstaller.php');
 
         $moduleInstaller = new ModuleInstaller();
         $moduleInstaller->install_custom_fields($fields);
+    }
+
+    /**
+     * Writes a vardef extension
+     * @param $field_name
+     * @param $to_save
+     */
+    function writeVardefExtension($field_name, $to_save)
+    {
+        require_once('modules/DynamicFields/templates/Fields/TemplateField.php');
+        global $beanList;
+        $module_singular = $beanList[$this->module];
+        $field = new TemplateField();
+        $field->name = $field_name;
+        parent::writeVardefExtension($module_singular, $field, $to_save);
     }
 }

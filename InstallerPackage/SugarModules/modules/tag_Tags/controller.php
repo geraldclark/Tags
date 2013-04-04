@@ -7,6 +7,11 @@ class tag_TagsController extends SugarController
         $this->view = 'addtags';
     }
 
+    function action_LoadTags()
+    {
+        $this->view = 'loadtags';
+    }
+
     function action_GetTags()
     {
         $this->view = 'gettags';
