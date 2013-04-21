@@ -424,7 +424,11 @@ class tag_Tags extends tag_Tags_sugar
         );
 
         $fieldHelper = new FieldHelper($module);
+
+        //Install custom fields
         $fieldHelper->installCustomFields($fields);
+
+        //Write custom vardef function for tag search
         $fieldHelper->writeVardefExtension($this->tag_search_field, array('function'=>'tag_getModuleTags'));
 
         //create relationship
@@ -572,6 +576,8 @@ class tag_Tags extends tag_Tags_sugar
             $hook = Array(99999, 'Add Selected Tags For New Records', 'modules/tag_Tags/Hooks/TagHooks.php', 'TagHooks', 'SaveTags');
             check_logic_hook_file($module, "after_save", $hook);
 
+            //No currently used
+            /*
             //add tags to editview and detailview
             $hook = Array(99999, 'Populate Tags Field', 'modules/tag_Tags/Hooks/TagHooks.php', 'TagHooks', 'PopulateTags');
             check_logic_hook_file($module, "after_retrieve", $hook);
@@ -579,6 +585,7 @@ class tag_Tags extends tag_Tags_sugar
             //add tags to listview
             $hook = Array(99999, 'Populate Tags Field with Count', 'modules/tag_Tags/Hooks/TagHooks.php', 'TagHooks', 'PopulateTagsCount');
             check_logic_hook_file($module, "process_record", $hook);
+            */
         }
     }
 
@@ -1064,41 +1071,25 @@ class tag_Tags extends tag_Tags_sugar
         }
     }
 
-    /**
-     * Retrieves and sets related tags count to the tag field on the bean - for use on subpanels
-     *
-     * @param object $bean - bean to retrieve retrieve and set tags count for display
+    /*
+     * Gets the stored tag count for a record
      */
-    public function setBeanTagsCount($bean)
+    public function getStoredTagCount($module, $id)
     {
-        $GLOBALS['log']->info($this->log_prefix . "Populating Tag count for {$bean->module_name} / {$bean->id}");
+        $db = DBManagerFactory::getInstance();
+        $moduleObj = BeanFactory::newBean($module);
+        $cstm_table = $moduleObj->get_custom_table_name();
 
-        //fetch value
-        if (($bean->{$this->tag_field} != '0' && $bean->{$this->tag_field} !== 0) && empty($bean->{$this->tag_count_field}))
+        $sql = "SELECT {$this->tag_count_field} FROM {$cstm_table} WHERE id_c = '{$id}'";
+
+        $count = $db->getOne($sql);
+
+        if ($count == '')
         {
-            $count = $this->getBeanTagsCount($bean, true);
-            $bean->{$this->tag_field} = $count;
-        }
-        else
-        {
-            $bean->{$this->tag_field} = $bean->{$this->tag_count_field};
+            $count = 0;
         }
 
-        if (!empty($bean->{$this->tag_field}))
-        {
-            if ($bean->{$this->tag_field} == '1')
-            {
-                $bean->{$this->tag_field} .= " Tag";
-            }
-            else
-            {
-                $bean->{$this->tag_field} .= " Tags";
-            }
-        }
-        else
-        {
-            $bean->{$this->tag_field} = '';
-        }
+        return $count;
     }
 
     /**

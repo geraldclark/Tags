@@ -25,18 +25,6 @@
  * governing these rights and limitations under the License.  Portions created
  * by SugarCRM are Copyright (C) 2004-2012 SugarCRM, Inc.; All Rights Reserved.
  ********************************************************************************/
-{assign var="field_val" value=$smarty.capture.field_val}
-{{capture name=idname assign=idname}}{{sugarvar key='name'}}{{/capture}}
-{capture name="tags"}
-{sugar_fetch object=$parentFieldArray key=$col}
-{{include file='custom/include/SugarFields/Fields/CustomTag/StandardView.tpl'}}
-{/capture}
-
-
-{sugarvar key='name'}
-{$smarty.capture.tags}
-
-
 
 *}
 
