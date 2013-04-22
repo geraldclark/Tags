@@ -32,31 +32,14 @@
 {tag_get_count module=$tag_module id=$tag_record_id}
 
 {if (($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView' || $view_action eq 'index')}
-
     {if ($tag_count ne '')}
-    <a href="javascript:void(0);" id="{$tag_id}_loader" onclick="populateTags('{$tag_module}','{$tag_record_id}', '{$tag_id}');">
+    <a href="javascript:void(0);" id="{$tag_id}_loader" onclick="populateTags('{$tag_module}','{$tag_record_id}', '{$tag_id}', true);">
         {$tag_count} {sugar_getimage name="moreItems.png" width="10" height="10"}
     </a>
     {/if}
 
 {/if}
 
-{if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') }
-
-    {if $tagSearchForm eq ''}
-        {foreach from=$values key=k item=i name=n}
-            {$i}{if !$smarty.foreach.n.last}, {/if}
-        {/foreach}
-        {else}
-    <script src="custom/include/SugarFields/Fields/CustomTag/CustomTag.js" type="text/javascript" id="CustomTagFunctions"></script>
-
-        {foreach from=$values key=k item=i name=n}
-        <a href="javascript:void(0);" id="{$tag_id}_{$k}" onclick="searchTag('{$tag_field}', '{$tag_module}', '{$tagSearchForm}', '{$tagSearchFormShort}', '{$k}');">{$i}</a>{if !$smarty.foreach.n.last}, {/if}
-        {/foreach}
-
-    {/if}
-
-    {else}
 
 <link rel="stylesheet" type="text/css" href="include/javascript/jquery/themes/base/jquery.ui.all.css">
 <link rel="stylesheet" type="text/css" href="custom/include/SugarFields/Fields/CustomTag/CustomTag.css">
@@ -65,41 +48,41 @@
 <script src="modules/tag_Tags/JavaScript/hailwood-jQuery-Tagit-3b0f6fa/js/tagit.js" type="text/javascript" charset="utf-8"></script>
 <script src="custom/include/SugarFields/Fields/CustomTag/CustomTag.js" type="text/javascript" id="CustomTagFunctions"></script>
 
-    {literal}
-    <style>
+{literal}
+<style>
 
+{/literal}
+{if $tagSearchForm ne ''}
+    {literal}
+    ul.tagit li.tagit-choice:hover {
+        cursor: pointer;
+        cursor: hand;
+    }
     {/literal}
-    {if $tagSearchForm ne ''}
-        {literal}
-        ul.tagit li.tagit-choice:hover {
-            cursor: pointer;
-            cursor: hand;
-        }
-        {/literal}
-    {/if}
-    {literal}
+{/if}
+{literal}
 
+{/literal}
+{tag_acl required_access="Restricted" module=$tag_module}
+    {literal}
+    ul.tagit li.tagit-choice {
+        padding: 1px 4px 1px 3px;
+    }
     {/literal}
-    {tag_acl required_access="Restricted" module=$tag_module}
-        {literal}
-        ul.tagit li.tagit-choice {
-            padding: 1px 4px 1px 3px;
-        }
-        {/literal}
-    {/tag_acl}
-    {tag_acl required_access="Editable, Limited" module=$tag_module}
-        {literal}
-        ul.tagit li.tagit-choice {
-            padding: 1px 13px 1px 3px;
-        }
-        {/literal}
-    {/tag_acl}
+{/tag_acl}
+{tag_acl required_access="Editable, Limited" module=$tag_module}
     {literal}
+    ul.tagit li.tagit-choice {
+        padding: 1px 13px 1px 3px;
+    }
+    {/literal}
+{/tag_acl}
+{literal}
 
-    </style>
-    <script>
+</style>
+<script>
 
-            SUGAR.util.doWhen("typeof $('#{/literal}{$tag_id}{literal}').tagit != 'undefined'", function(){
+        SUGAR.util.doWhen("typeof $('#{/literal}{$tag_id}{literal}').tagit != 'undefined'", function(){
 
         $('#{/literal}{$tag_id}_list{literal}').tagit({
     highlightOnExistColor: '#327FC3',
@@ -197,53 +180,70 @@ tagSource: function(search, showChoices) {
 
         SUGAR.util.doWhen("$('#{/literal}{$tag_id}_list{literal}').attr('class') == 'tagit'", function(){{/literal}
 
-    {if $tagSearchForm ne ''}
-        {literal}$("#{/literal}{$tag_id}_list{literal} .tagit-choice").live('click', function(e) {
-        tagvalue = $(this).attr('tagvalue').trim();
-            searchTag("{/literal}{$tag_field}{literal}", "{/literal}{$tag_module}{literal}", "{/literal}{$tagSearchForm}{literal}", "{/literal}{$tagSearchFormShort}{literal}", tagvalue);
-    });
-    {/literal}
-        {tag_acl required_access="Editable, Limited" module=$tag_module}
-            {literal}$('#{/literal}{$tag_id}_list{literal} .tagit-close').live('click', function(e){
-            e.stopPropagation();
-        });{/literal}
-        {/tag_acl}
-
-    {/if}
-    {literal}
-
-    {/literal}
-    {tag_acl required_access="Restricted" module=$tag_module}
-        {literal}
-                $('#{/literal}{$tag_id}_list{literal} .tagit-close').remove();
-            $('#{/literal}{$tag_id}_list{literal} .tagit-input').remove();
-    {/literal}
+{if $tagSearchForm ne ''}
+    {literal}$("#{/literal}{$tag_id}_list{literal} .tagit-choice").live('click', function(e) {
+    tagvalue = $(this).attr('tagvalue').trim();
+        searchTag("{/literal}{$tag_field}{literal}", "{/literal}{$tag_module}{literal}", "{/literal}{$tagSearchForm}{literal}", "{/literal}{$tagSearchFormShort}{literal}", tagvalue);
+});
+{/literal}
+    {tag_acl required_access="Editable, Limited" module=$tag_module}
+        {literal}$('#{/literal}{$tag_id}_list{literal} .tagit-close').live('click', function(e){
+        e.stopPropagation();
+    });{/literal}
     {/tag_acl}
+
+{/if}
+{literal}
+
+{/literal}
+{tag_acl required_access="Restricted" module=$tag_module}
     {literal}
-    });
-    });
+            $('#{/literal}{$tag_id}_list{literal} .tagit-close').remove();
+        $('#{/literal}{$tag_id}_list{literal} .tagit-input').remove();
+{/literal}
+{/tag_acl}
+{literal}
+});
+});
 
-    </script>
-    {/literal}
+</script>
+{/literal}
 
-<span id="{$tag_id}_content_loader"></span>
-<span id="{$tag_id}_content" >
-        <ul id="{$tag_id}_list" class="prevent"></ul>
+
+<span id="{$tag_id}_content_collapse" style="display:none;">
+    <a href="javascript:void(0);" id="{$tag_id}_less" onclick="$(this).hide();$('#{$tag_id}_content').hide();$('#{$tag_id}_more').show();">
+    {$tag_count} <span id="{$tag_id}_less">{sugar_getimage name="lessitems.png" width="10" height="10"}</span>
+    </a>
+    <a href="javascript:void(0);" id="{$tag_id}_more" style="display:none;"  onclick="$(this).hide();$('#{$tag_id}_content').show();$('#{$tag_id}_less').show();">
+    {$tag_count} <span id="{$tag_id}_more">{sugar_getimage name="moreitems.png" width="10" height="10"}</span>
+    </a>
     </span>
 
-    {if $save_style eq 'Submit'}
-    <input type="hidden" value="{$tag_value}" name="{$tag_id}" id="{$tag_id}"/>
-    {/if}
+<span id="{$tag_id}_content_loader"></span>
+
+<span id="{$tag_id}_content" >
+    <ul id="{$tag_id}_list" style="display:none;" class="prevent"></ul>
+    </span>
+
+
+{if $save_style eq 'Submit'}
+<input type="hidden" value="{$tag_value}" name="{$tag_id}" id="{$tag_id}"/>
 {/if}
+
 
 {*if ($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView'}
 </span>
 {/if*}
 
-{if (($view_action eq 'DetailView' || $view_action eq 'EditView' )&& $view_module eq $tag_module)}
+{if (($view_action eq 'DetailView' && $view_module ne $tag_module) || ($is_subpanel eq '1') || $view_action eq 'ListView' || $view_action eq 'index')}
+{* Dont run populate *}
+    {elseif (( $view_action eq 'DetailView' || $view_action eq 'EditView' ) && $view_module eq $tag_module)}
+
 <script>
-    {literal}SUGAR.util.doWhen("typeof $('#{/literal}{$tag_id}{literal}').tagit != 'undefined'", function(){{/literal}
-        populateTags('{$tag_module}','{$tag_record_id}', '{$tag_id}');
+        {literal}SUGAR.util.doWhen("typeof $('#{/literal}{$tag_id}{literal}').tagit != 'undefined'", function(){{/literal}
+        $('#{$tag_id}_content_collapse').remove();
+        populateTags('{$tag_module}','{$tag_record_id}', '{$tag_id}', false);
     });
 </script>
+
 {/if}

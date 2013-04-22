@@ -10,12 +10,12 @@ function searchTag(field, module, searchForm, searchFormShort, tag)
 {
     var form = $(
         '<form action="index.php?module='+module+'&action=index" method="post">' +
-        '<input type="hidden" name="searchFormTab" value="'+searchForm+'" />' +
-        '<input type="hidden" name="modules" value="'+module+'" />' +
-        '<input type="hidden" name="action" value="index" />' +
-        '<input type="hidden" name="'+field.toLowerCase()+"_"+searchFormShort+'[]" value="'+tag.trim()+'" />' +
-        '<input type="hidden" value="true" name="query"/>' +
-        '</form>'
+            '<input type="hidden" name="searchFormTab" value="'+searchForm+'" />' +
+            '<input type="hidden" name="modules" value="'+module+'" />' +
+            '<input type="hidden" name="action" value="index" />' +
+            '<input type="hidden" name="'+field.toLowerCase()+"_"+searchFormShort+'[]" value="'+tag.trim()+'" />' +
+            '<input type="hidden" value="true" name="query"/>' +
+            '</form>'
     );
 
     $('body').append(form);
@@ -52,10 +52,10 @@ function handleResult(element, response)
  * @param record_id
  * @param control_id
  */
-function populateTags(module, record_id, control_id)
+function populateTags(module, record_id, control_id, from_list)
 {
-
     $('#'+control_id+'_loader').hide();
+    $('#'+control_id+'_content_collapse').show();
     $('#'+control_id+'_content_loader').html('<img src="themes/default/images/img_loading.gif" align="absmiddle">');
 
     url = 'index.php?to_pdf=1&module=tag_Tags&action=LoadTags&record_module='+module+'&record_id='+record_id;
@@ -72,7 +72,6 @@ function populateTags(module, record_id, control_id)
 
         $('#'+control_id+'_list').removeClass('prevent');
         $('#'+control_id+'_list').show();
-
-
+        $('#'+control_id+'_content').show();
     });
 }
