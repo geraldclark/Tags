@@ -33,18 +33,18 @@ class tag_Taggers extends tag_Taggers_sugar
     var $decoded_monitored_fields;
     var $log_prefix = 'Tagger :: ';
 
-	function tag_Taggers()
+    function tag_Taggers()
     {
-		parent::tag_Taggers_sugar();
-	}
+        parent::tag_Taggers_sugar();
+    }
 
     /**
-    * Function fetches a single row of data given the primary key value.
-    *
-    * @param string $id Optional, default -1, is set to -1 id value from the bean is used, else, passed value is used
-    * @param boolean $encode Optional, default true, encodes the values fetched from the database.
-    * @param boolean $deleted Optional, default true, if set to false deleted filter will not be added.
-    */
+     * Function fetches a single row of data given the primary key value.
+     *
+     * @param string $id Optional, default -1, is set to -1 id value from the bean is used, else, passed value is used
+     * @param boolean $encode Optional, default true, encodes the values fetched from the database.
+     * @param boolean $deleted Optional, default true, if set to false deleted filter will not be added.
+     */
     function retrieve($id = -1, $encode=true, $deleted=true)
     {
         $bean = parent::retrieve($id, $encode, $deleted);
@@ -56,10 +56,10 @@ class tag_Taggers extends tag_Taggers_sugar
     }
 
     /**
-    * Saves the Tagger
-    *
-    * @param boolean $check_notify Optional, default false, if set to true assignee of the record is notified via email.
-    */
+     * Saves the Tagger
+     *
+     * @param boolean $check_notify Optional, default false, if set to true assignee of the record is notified via email.
+     */
     function save($check_notify = FALSE)
     {
         $this->checkHooks();
@@ -124,13 +124,13 @@ class tag_Taggers extends tag_Taggers_sugar
      */
     function checkHooks()
     {
-            require_once("include/utils.php");
+        require_once("include/utils.php");
 
-            //handle tag save logic
-            $hook = Array(99999, 'Force relationship policy between taggers and tags', 'modules/tag_Taggers/Hooks/TaggerHooks.php', 'TaggerHooks', 'ForceRelationshipRestrictions');
-            check_logic_hook_file('tag_Taggers', "after_relationship_add", $hook);
-            //as of 6.5.5, it doesn't seem we need to handle from both sides
-            //check_logic_hook_file('tag_Tags', "after_relationship_add", $hook);
+        //handle tag save logic
+        $hook = Array(99999, 'Force relationship policy between taggers and tags', 'modules/tag_Taggers/Hooks/TaggerHooks.php', 'TaggerHooks', 'ForceRelationshipRestrictions');
+        check_logic_hook_file('tag_Taggers', "after_relationship_add", $hook);
+        //as of 6.5.5, it doesn't seem we need to handle from both sides
+        //check_logic_hook_file('tag_Tags', "after_relationship_add", $hook);
     }
 
     /**
@@ -186,7 +186,7 @@ class tag_Taggers extends tag_Taggers_sugar
                     && !empty($field['vname'])
                     && isset($field['type'])
                     && in_array($field['type'], array('name', 'varchar', 'text', 'enum', 'multienum', 'phone', 'worklog'))
-                   )
+                )
                 {
                     $label = trim(translate($field['vname'], $module));
                     $filteredFields[$field['name']] = $label;
@@ -286,7 +286,7 @@ class tag_Taggers extends tag_Taggers_sugar
                     {
                         if (!isset($tagsPhrases[$relatedTag->id]))
                         {
-                           $tagsPhrases[$relatedTag->id] = array();
+                            $tagsPhrases[$relatedTag->id] = array();
                         }
 
                         $tagsPhrases[$relatedTag->id][] = $relatedPhrase->phrase;
@@ -353,10 +353,16 @@ class tag_Taggers extends tag_Taggers_sugar
 
                     foreach ($patterns as $pattern)
                     {
-                        if(preg_match($pattern, $bean->$field))
+                        $result = preg_match($pattern, $bean->$field);
+
+                        if($result)
                         {
                             $selectedTags[$tag] = $tag;
                             $match = true;
+                        }
+                        elseif ($result === FALSE)
+                        {
+                            $GLOBALS['log']->fatal($this->log_prefix . "The pattern '{$pattern}' is invalid for tag '{$tag}'.");
                         }
 
                         $GLOBALS['log']->info($this->log_prefix . "Matching\r\nTagger: {$this->id} / {$this->name}\r\nTag: {$tag}\r\nModule: {$bean->module_name}\r\nField: {$field}\r\nPattern: '{$pattern}'\r\nString: '".preg_replace('/\s\s+/', ' ', $bean->$field) . "'\r\nMatch: " . ($match == true ? 'True' : 'False') . "\r\n");
