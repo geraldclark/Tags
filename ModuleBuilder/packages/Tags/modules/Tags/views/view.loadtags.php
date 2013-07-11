@@ -2,7 +2,7 @@
 
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
-/*********************************************************************************
+ /*********************************************************************************
  * The contents of this file are subject to the SugarCRM Master Subscription
  * Agreement ("License") which can be viewed at
  * http://www.sugarcrm.com/crm/master-subscription-agreement
@@ -29,17 +29,37 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
  * by SugarCRM are Copyright (C) 2004-2012 SugarCRM, Inc.; All Rights Reserved.
  ********************************************************************************/
 
-class tag_TaggersViewEdit extends ViewEdit
+/* Action used to lookup tags matching search text */
+
+class ViewLoadTags extends SugarView
 {
-    public function preDisplay()
- 	{
-        global $current_user;
-
-        if(!$current_user->is_admin)
+    /**
+	 * @see SugarView::display()
+	 */
+	public function display()
+	{
+        if (
+            isset($_REQUEST['record_module'])
+            && !empty($_REQUEST['record_module'])
+            && isset($_REQUEST['record_id'])
+            && !empty($_REQUEST['record_id'])
+            )
         {
-            sugar_die(translate("LBL_MUST_BE_ADMIN"));
-        }
+            $bean = BeanFactory::getBean($_REQUEST['record_module'], $_REQUEST['record_id']);
+            $tagObjs = BeanFactory::newBean('tag_Tags')->getBeanTags($bean, true);
 
-        parent::preDisplay();
- 	}
+            $tags = array();
+            foreach ($tagObjs as $tagObj)
+            {
+                $tags[$tagObj->id] = $tagObj->name;
+            }
+
+            asort($tags);
+            echo json_encode($tags);
+        }
+        else
+        {
+            echo '<message>Failure - A request parameter is missing.</message>';
+        }
+	}
 }

@@ -31,11 +31,6 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 class tag_TagsViewList extends ViewList
 {
- 	public function __construct()
- 	{
- 		parent::ViewList();
- 	}
-
  	public function preDisplay()
  	{
         global $current_user;

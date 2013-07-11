@@ -31,11 +31,6 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 class tag_PhrasesViewEdit extends ViewEdit
 {
- 	public function __construct()
- 	{
- 		parent::ViewEdit();
- 	}
-
     public function preDisplay()
  	{
         global $current_user;

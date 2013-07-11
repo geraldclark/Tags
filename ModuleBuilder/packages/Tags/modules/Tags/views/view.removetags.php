@@ -57,6 +57,7 @@ class ViewRemoveTags extends SugarView
             if ($tagObj->getTagUserACL($beanObj->module_name) != 'Restricted')
             {
                 $tagObj->removeTagsFromBean($beanObj, array($tag));
+                $tagObj->syncBean($beanObj);
                 echo '<message>Success</div>';
             }
             else

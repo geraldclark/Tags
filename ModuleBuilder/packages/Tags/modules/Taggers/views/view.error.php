@@ -33,7 +33,6 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 class ViewError extends SugarView
 {
-
     public function preDisplay()
    	{
           global $current_user;

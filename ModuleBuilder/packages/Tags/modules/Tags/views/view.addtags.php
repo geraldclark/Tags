@@ -58,6 +58,7 @@ class ViewAddTags extends SugarView
             if ($tagObj->getTagUserACL($_REQUEST['record_module']) != 'Restricted')
             {
                 $tags = $tagObj->addTagsToBeanByName($beanObj, $tag);
+                $tagObj->syncBean($beanObj);
 
                 if (empty($tags))
                 {
