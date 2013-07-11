@@ -30,41 +30,79 @@ require_once('modules/tag_Phrases/tag_Phrases_sugar.php');
 
 class tag_Phrases extends tag_Phrases_sugar
 {
-	function tag_Phrases()
+    function tag_Phrases()
     {
-		parent::tag_Phrases_sugar();
-	}
+        parent::tag_Phrases_sugar();
+    }
 
     /**
-    * Saves the Dashboard Template
-    *
-    * @param boolean $check_notify Optional, default false, if set to true assignee of the record is notified via email.
-    */
+     * Saves the phrase number
+     * @param boolean $check_notify Optional, default false, if set to true assignee of the record is notified via email.
+     */
     function save($check_notify = FALSE)
     {
         //increment phrase number
         if (empty($this->id))
         {
-            $results = $this->get_list('phrase_number desc', '', '', 1);
-            $results = $results["list"];
+            $db = DBManagerFactory::getInstance();
+            $sql = $this->create_new_list_query("phrase_number DESC", "", array('phrase_number'), array(), false);
+            $result = $db->limitQuery($sql, 0, 1);
 
-            if (count($results) == 0)
+            while($row = $db->fetchByAssoc($result) )
+            {
+                $count = $row['phrase_number'];
+            }
+
+            if ($count === 0 || $count === '' || empty($count))
             {
                 $this->phrase_number = 1;
             }
             else
             {
-                foreach($results as $result)
-                {
-                    $this->phrase_number = intval($result->phrase_number) + 1;
-                }
+                $this->phrase_number = (int) $count + 1;
             }
 
             $this->name = $this->phrase_number;
         }
 
         $id = parent::save($check_notify);
+
         return $id;
+    }
+
+    /**
+     * Validates whether a regex pattern is valid
+     * @param $pattern
+     * @return bool
+     */
+    function isValidRegexPattern($pattern)
+    {
+        $result = preg_match($pattern, 'placeholder');
+
+        if ($result !== FALSE)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determines if a regex matches a pattern
+     * @param $pattern
+     * @param $subject
+     * @return bool
+     */
+    function hasMatches($pattern, $subject)
+    {
+        $result = preg_match($pattern, $subject);
+
+        if ($this->isValidRegexPattern($pattern) && $result !== 0)
+        {
+            return true;
+        }
+
+        return false;
     }
 
 }
